@@ -36,6 +36,7 @@
     menu.appendChild(autoAttackLabel);
 
             let autoAttackEnabled = false;
+    let lastAttackTime=0;
     let game = null;
     let originalDrawObjects = null;
         let overlayCanvas, overlayCtx;
@@ -140,7 +141,7 @@
         overlayCtx.clearRect(0,0,overlayCanvas.width,overlayCanvas.height);
         if(!autoAttackEnabled||!game.me){return requestAnimationFrame(overlayLoop);}        
         const player=game.me;
-        const triggerZoneWidth=player.width*0.96;
+        const triggerZoneWidth=45;
         const triggerZoneHeight=player.height;
         const leftTrigger={left:player.position.x-triggerZoneWidth,right:player.position.x,top:player.position.y+triggerZoneHeight,bottom:player.position.y};
         const rightTrigger={left:player.position.x+player.width,right:player.position.x+player.width+triggerZoneWidth,top:player.position.y+triggerZoneHeight,bottom:player.position.y};
@@ -151,16 +152,15 @@
             if(obj&&targetEnemyNames.includes(obj.name)){
                 const enemyCollider=getColliderRect(obj);
                                 const pSprite=game.getRenderPosition(obj.position.x,obj.position.y);
-                let sW=obj.width*game.scaleX*game.zoom;
-                let sH=obj.height*game.scaleY*game.zoom;
+                const baseW=obj.width*game.scaleX*game.zoom;
+                const baseH=obj.height*game.scaleY*game.zoom;
                 let factor=1;
-                if(obj.name==='pumpkinGhost') factor=0.95;
-                else if(obj.name==='ghostlyReaper') factor=0.97;
-                else if(obj.name==='grimReaper') factor=0.95;
-                const dx=sW*(1-factor)/2;
-                const dy=sH*(1-factor)/2;
-                sW*=factor;
-                sH*=factor;
+                if(obj.name==='pumpkinGhost' || obj.name==='ghostlyReaper' || obj.name==='ghost') factor=1.05;
+                else if(obj.name==='grimReaper') factor=1.04;
+                const sW=baseW*factor;
+                const sH=baseH*factor;
+                const dx=-(sW-baseW)/2;
+                const dy=-(sH-baseH)/2;
                 overlayCtx.save();
                 overlayCtx.globalAlpha=0.4;
                 overlayCtx.strokeStyle='white';
@@ -182,9 +182,12 @@
         overlayCtx.fillRect(pRight2.x,pRight2.y-zoneH2,zoneW2,zoneH2);
         overlayCtx.restore();
 
-        if(enemyDetected && typeof skillStart==='function') {
-            console.log('[AutoAttack] skillStart()');
-            skillStart();
+        if(enemyDetected && Date.now()-lastAttackTime>=50){
+            if(typeof skillStart==='function'){
+                lastAttackTime=Date.now();
+                console.log('[AutoAttack] skillStart()');
+                skillStart();
+            }
         }
         requestAnimationFrame(overlayLoop);
     }
