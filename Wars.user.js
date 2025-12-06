@@ -140,22 +140,12 @@
         overlayCtx.clearRect(0,0,overlayCanvas.width,overlayCanvas.height);
         if(!autoAttackEnabled||!game.me){return requestAnimationFrame(overlayLoop);}        
         const player=game.me;
-        const triggerZoneWidth=player.width*0.8;
+        const triggerZoneWidth=player.width*0.96;
         const triggerZoneHeight=player.height;
         const leftTrigger={left:player.position.x-triggerZoneWidth,right:player.position.x,top:player.position.y+triggerZoneHeight,bottom:player.position.y};
         const rightTrigger={left:player.position.x+player.width,right:player.position.x+player.width+triggerZoneWidth,top:player.position.y+triggerZoneHeight,bottom:player.position.y};
         let leftHit=false, rightHit=false;
-                overlayCtx.save();
-        overlayCtx.globalAlpha=0.3;
-        overlayCtx.fillStyle='red';
-        const zoneW=triggerZoneWidth*game.scaleX*game.zoom;
-        const zoneH=triggerZoneHeight*game.scaleY*game.zoom;
-        const pLeft=game.getRenderPosition(leftTrigger.left,leftTrigger.bottom);
-        overlayCtx.fillRect(pLeft.x,pLeft.y-zoneH,zoneW,zoneH);
-        const pRight=game.getRenderPosition(rightTrigger.left,rightTrigger.bottom);
-        overlayCtx.fillRect(pRight.x,pRight.y-zoneH,zoneW,zoneH);
-        overlayCtx.restore();
-                let enemyDetected=false;
+                                let enemyDetected=false;
         for(const id in game.gameObjects){
             const obj=game.gameObjects[id];
             if(obj&&targetEnemyNames.includes(obj.name)){
@@ -164,8 +154,9 @@
                 let sW=obj.width*game.scaleX*game.zoom;
                 let sH=obj.height*game.scaleY*game.zoom;
                 let factor=1;
-                if(obj.name==='ghostlyReaper'||obj.name==='pumpkinGhost') factor=0.8;
-                else if(obj.name==='grimReaper') factor=0.93;
+                if(obj.name==='pumpkinGhost') factor=0.95;
+                else if(obj.name==='ghostlyReaper') factor=0.97;
+                else if(obj.name==='grimReaper') factor=0.95;
                 const dx=sW*(1-factor)/2;
                 const dy=sH*(1-factor)/2;
                 sW*=factor;
