@@ -1,0 +1,1897 @@
+var game = new Engine
+  , gameLoopOPS = 60;
+isMobile && (gameLoopOPS = 60),
+game.displayMode = "FULLSCREEN",
+game.initCanvas("canvasGame", 1920, 1080),
+game.gameLoopOPS = gameLoopOPS,
+game.drawColliders = !1,
+game.gravity = 500,
+game.colliderSensivity = 2,
+game.maxInterpolateDistanceTeleport = 300,
+game.maxInterpolateDistanceIgnore = 20,
+game.client = !0,
+game.map = {
+    width: 16e4,
+    height: 6400
+},
+game.hashMapRefreshInterval = 50,
+game.hashMapCellWidth = 64,
+game.hashMapCellHeight = 64,
+isMobile && (game.hashMapCellWidth = 128,
+game.hashMapCellHeight = 128),
+game.graphicWorkerURL = siteUrl + "js/graphic-worker.js",
+game.init();
+var skinsPreview = [];
+skinsPreview.grimReaper = [],
+skinsPreview.pumpkinGhost = [],
+skinsPreview.ghost = [],
+skinsPreview.ghostlyReaper = [],
+skinsPreview.pets = [],
+skinsPreview.evolution_effects = [],
+skinsPreview.kill_effects = [],
+skinsPreview.tombstones = [];
+var leaderboardStars = []
+  , discordAskImage = new Image
+  , arenaFragImage = new Image
+  , friendImage = new Image
+  , spawnTimerImage = new Image
+  , premiumImage = new Image;
+function loadSprites() {
+    if (window.halloweenTime) {
+        for (var e = 1; e <= 4; e++)
+            game.loadSprite("fly_" + e + "_left", "characters/fly/halloween/" + e + ".png"),
+            game.loadSprite("fly_" + e + "_right", "characters/fly/halloween/" + e + ".png", {
+                flip: !0
+            });
+        game.loadSprite("cloud1", "clouds/cloud1_halloween.png"),
+        game.loadSprite("cloud2", "clouds/cloud2_halloween.png"),
+        game.loadSprite("cloud3", "clouds/cloud3_halloween.png"),
+        game.loadSprite("cloud4", "clouds/cloud4_halloween.png"),
+        game.loadSprite("cat1", "food/cat/1_halloween.png"),
+        game.loadSprite("cat2", "food/cat/2_halloween.png"),
+        game.loadSprite("tree_1__no_vegetation_base", "background/tree_1__no_vegetation_base_halloween.png"),
+        game.loadSprite("tree_3_no_vegetation_base", "background/tree_3_no_vegetation_base_halloween.png"),
+        game.loadSprite("tree_1_bright_green", "background/tree_1_bright_green_halloween.png"),
+        game.loadSprite("tree_2_bright_green", "background/tree_2_bright_green_halloween.png"),
+        game.loadSprite("tree_3_bright_green", "background/tree_3_bright_green_halloween.png"),
+        game.loadSprite("standing_stone", "background/standing_stone_halloween.png"),
+        game.loadSprite("rock_1_blue", "background/rock_1_blue_halloween.png"),
+        game.loadSprite("rock_3_grey", "background/rock_3_grey_halloween.png"),
+        game.loadSprite("space_rock_1", "background/space_rock_1_halloween.png"),
+        game.loadSprite("space_rock_2", "background/space_rock_2_halloween.png"),
+        game.loadSprite("space_rock_3", "background/space_rock_3_halloween.png"),
+        game.loadSprite("jungleTree1", "background/jungleTree1_halloween.png"),
+        game.loadSprite("jungleTree2", "background/jungleTree2_halloween.png"),
+        game.loadSprite("volcano_1", "background/volcano_1_halloween.png"),
+        game.loadSprite("volcano_2", "background/volcano_2_halloween.png"),
+        game.loadSprite("dino_bones", "background/dino_bones_halloween.png"),
+        game.loadSprite("bones", "background/bones_halloween.png"),
+        game.loadSprite("bush_1_bright_green", "bushes/bush_1_bright_green_halloween.png"),
+        game.loadSprite("igloo", "misc/igloo_halloween.png");
+        for (e = 1; e <= 13; e++)
+            game.loadSprite("house_" + e, "houses/house_" + e + "_halloween.png");
+        game.loadSprite("arena", "background/arena_halloween.png"),
+        game.loadSprite("taxi", "teleports/taxi_halloween.png"),
+        game.loadSprite("background_normal_1", "background/background_normal_1_halloween.png"),
+        game.loadSprite("background_normal_2", "background/background_normal_2_halloween.png"),
+        game.loadSprite("background_normal_3", "background/background_normal_3_halloween.png"),
+        game.loadSprite("background_normal_bottom", "background/background_normal_bottom_halloween.png"),
+        game.loadSprite("background_sea_1", "background/background_sea_1_halloween.png"),
+        game.loadSprite("background_sea_2", "background/background_sea_2_halloween.png"),
+        game.loadSprite("background_sea_3", "background/background_sea_3_halloween.png"),
+        game.loadSprite("background_sea_bottom", "background/background_sea_bottom_halloween.png"),
+        game.loadSprite("background_volcano_1", "background/background_volcano_1_halloween.png"),
+        game.loadSprite("background_volcano_2", "background/background_volcano_2_halloween.png"),
+        game.loadSprite("background_volcano_3", "background/background_volcano_3_halloween.png"),
+        game.loadSprite("background_desert_1", "background/background_desert_1_halloween.png"),
+        game.loadSprite("background_desert_2", "background/background_desert_2_halloween.png"),
+        game.loadSprite("background_desert_3", "background/background_desert_3_halloween.png"),
+        game.loadSprite("background_desert_bottom", "background/background_desert_bottom_halloween.png"),
+        game.loadSprite("background_snow_1", "background/background_snow_1_halloween.png"),
+        game.loadSprite("background_snow_2", "background/background_snow_2_halloween.png"),
+        game.loadSprite("background_snow_3", "background/background_snow_3_halloween.png"),
+        game.loadSprite("background_snow_bottom", "background/background_snow_bottom_halloween.png"),
+        game.loadSprite("background_jungle_1", "background/background_jungle_1_halloween.png"),
+        game.loadSprite("background_jungle_2", "background/background_jungle_2_halloween.png"),
+        game.loadSprite("background_jungle_3", "background/background_jungle_3_halloween.png"),
+        game.loadSprite("ship_bg", "background/ship_bg_halloween.png"),
+        game.loadSprite("arena_window", "background/arena_window_halloween.png"),
+        game.loadSprite("toxic_machine", "background/toxic_machine_halloween.png"),
+        game.loadSprite("brick_grey", "tiles/brick_grey_halloween.png");
+        for (e = 1; e <= 2; e++)
+            game.loadSprite("dirt_snow" + e, "tiles/dirt_snow" + e + "_halloween.png");
+        game.loadSprite("brick_pyramid", "tiles/brick_pyramid_halloween.png"),
+        game.loadSprite("sand", "tiles/sand_halloween.png"),
+        game.loadSprite("fence", "tiles/fence_halloween.png"),
+        game.loadSprite("iceBlock", "tiles/iceBlock_halloween.png"),
+        game.loadSprite("ice_left", "tiles/ice_left_halloween.png"),
+        game.loadSprite("ice_right", "tiles/ice_right_halloween.png"),
+        game.loadSprite("ice_middle", "tiles/ice_middle_halloween.png"),
+        game.loadSprite("jungleTop", "tiles/jungleTop_halloween.png"),
+        game.loadSprite("jungleBottom", "tiles/jungleBottom_halloween.png"),
+        game.loadSprite("stalk_light_green", "tiles/stalk_light_green_halloween.png"),
+        game.loadSprite("background_lightblue", "background/background_lightblue_halloween.png"),
+        game.loadSprite("background_lightblue_to_purple", "background/background_lightblue_to_purple_halloween.png"),
+        game.loadSprite("castle_bg", "background/castle_bg_halloween.png"),
+        game.loadSprite("background_graveyard_left", "background/background_graveyard_left_halloween.png"),
+        game.loadSprite("background_graveyard_right", "background/background_graveyard_left_halloween.png", {
+            flip: !0
+        }),
+        game.loadSprite("background_graveyard_top_left", "background/background_graveyard_top_left_halloween.png"),
+        game.loadSprite("background_graveyard_top_right", "background/background_graveyard_top_left_halloween.png", {
+            flip: !0
+        }),
+        game.loadSprite("background_graveyard_top", "background/background_graveyard_top_halloween.png");
+        for (e = 1; e <= 3; e++)
+            game.loadSprite("dirt_grass" + e, "tiles/dirt_graveyard_" + e + ".png");
+        for (e = 1; e <= 9; e++)
+            game.loadSprite("dirt" + e, "tiles/dirt_fill_graveyard_" + e + ".png");
+        for (e = 1; e <= 4; e++)
+            game.loadSprite("dirt_top" + e, "tiles/dirt_top_graveyard_" + e + ".png");
+        game.loadSprite("strawberry_bush", "bushes/strawberry_bush_halloween.png"),
+        game.loadSprite("arctic", "background/arctic_halloween.png"),
+        game.loadSprite("ocean", "background/ocean_halloween.png"),
+        game.loadSprite("water1", "tiles/water2_1_halloween.png"),
+        game.loadSprite("water2", "tiles/water2_2_halloween.png"),
+        game.loadSprite("water2_fill", "tiles/water2_fill_halloween.png"),
+        game.loadSprite("water2_1", "tiles/water2_1_halloween.png"),
+        game.loadSprite("water2_2", "tiles/water2_2_halloween.png");
+        for (e = 1; e <= 8; e++)
+            game.loadSprite("water_splash_" + e, "misc/waterSplash/" + e + "_halloween.png")
+    }
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("eagle_" + e + "_right", "characters/eagle/" + e + ".png"),
+        game.loadSprite("eagle_" + e + "_left", "characters/eagle/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("hawk_" + e + "_right", "characters/hawk/" + e + ".png"),
+        game.loadSprite("hawk_" + e + "_left", "characters/hawk/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("falcon_" + e + "_right", "characters/falcon/" + e + ".png"),
+        game.loadSprite("falcon_" + e + "_left", "characters/falcon/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("parrot_" + e + "_right", "characters/parrot/" + e + ".png"),
+        game.loadSprite("parrot_" + e + "_left", "characters/parrot/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 9; e++)
+        game.loadSprite("owl_" + e + "_right", "characters/owl/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("owl_" + e + "_left", "characters/owl/" + e + ".png");
+    for (e = 1; e <= 9; e++)
+        game.loadSprite("snowyOwl_" + e + "_right", "characters/snowyOwl/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("snowyOwl_" + e + "_left", "characters/snowyOwl/" + e + ".png");
+    for (e = 1; e <= 3; e++)
+        game.loadSprite("bat_" + e + "_right", "characters/bat/" + e + ".png"),
+        game.loadSprite("bat_" + e + "_left", "characters/bat/" + e + ".png", {
+            flip: !0
+        });
+    if (window.christmasTime)
+        for (e = 1; e <= 4; e++)
+            game.loadSprite("fly_" + e + "_left", "characters/fly/xmas/" + e + ".png"),
+            game.loadSprite("fly_" + e + "_right", "characters/fly/xmas/" + e + ".png", {
+                flip: !0
+            });
+    else
+        for (e = 1; e <= 4; e++)
+            game.loadSprite("fly_" + e + "_left", "characters/fly/standard/" + e + ".png"),
+            game.loadSprite("fly_" + e + "_right", "characters/fly/standard/" + e + ".png", {
+                flip: !0
+            });
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("pumpkin_" + e + "_left", "characters/pumpkin/" + e + ".png"),
+        game.loadSprite("pumpkin_" + e + "_right", "characters/pumpkin/" + e + ".png", {
+            flip: !0
+        });
+    skinsPreview.ghostlyReaper[0] = "ghostlyReaper_1_right";
+    for (var a = [{
+        skinId: 0,
+        path: "standard"
+    }, {
+        skinId: 1,
+        path: "pirate"
+    }, {
+        skinId: 2,
+        path: "demonic"
+    }, {
+        skinId: 3,
+        path: "cute"
+    }, {
+        skinId: 4,
+        path: "shadow"
+    }, {
+        skinId: 5,
+        path: "angry"
+    }, {
+        skinId: 6,
+        path: "halloween2021"
+    }, {
+        skinId: 7,
+        path: "xmas2021"
+    }, {
+        skinId: 8,
+        path: "leprechaun"
+    }, {
+        skinId: 9,
+        path: "easter2022"
+    }, {
+        skinId: 10,
+        path: "cyborg"
+    }, {
+        skinId: 11,
+        path: "halloween2022"
+    }, {
+        skinId: 12,
+        path: "policeman"
+    }, {
+        skinId: 13,
+        path: "xmas2022"
+    }, {
+        skinId: 14,
+        path: "coconut"
+    }, {
+        skinId: 15,
+        path: "crybaby"
+    }, {
+        skinId: 16,
+        path: "chain"
+    }, {
+        skinId: 17,
+        path: "kingjustice"
+    }, {
+        skinId: 18,
+        path: "patrick2023"
+    }, {
+        skinId: 19,
+        path: "easter2023"
+    }, {
+        skinId: 20,
+        path: "halloween2023"
+    }, {
+        skinId: 21,
+        path: "xmas2023"
+    }, {
+        skinId: 22,
+        path: "mafioso"
+    }, {
+        skinId: 23,
+        path: "patrick2024"
+    }, {
+        skinId: 24,
+        path: "easter2024"
+    }, {
+        skinId: 25,
+        path: "halloween2024"
+    }, {
+        skinId: 26,
+        path: "soulDivider"
+    }, {
+        skinId: 27,
+        path: "astronaut"
+    }, {
+        skinId: 28,
+        path: "xmas2024"
+    }, {
+        skinId: 29,
+        path: "patrick2025"
+    }, {
+        skinId: 30,
+        path: "easter2025"
+    }, {
+        skinId: 31,
+        path: "halloween2025"
+    }, {
+        skinId: 32,
+        path: "nightmare"
+    }, {
+        skinId: 33,
+        path: "dragonLord"
+    }], o = 0; o < a.length; o++) {
+        var r = a[o];
+        for (e = 1; e <= 17; e++)
+            game.loadSprite("ghostlyReaper_" + e + "_left" + (r.skinId > 0 ? "_" + r.skinId : ""), "characters/ghostlyReaper/" + r.path + "/flying/" + e + ".png", {
+                flip: !0,
+                dontDownload: r.skinId > 0
+            }),
+            game.loadSprite("ghostlyReaper_" + e + "_right" + (r.skinId > 0 ? "_" + r.skinId : ""), "characters/ghostlyReaper/" + r.path + "/flying/" + e + ".png", {
+                dontDownload: r.skinId > 0
+            });
+        for (e = 1; e <= 16; e++)
+            game.loadSprite("ghostlyReaper_" + e + "_attack_left" + (r.skinId > 0 ? "_" + r.skinId : ""), "characters/ghostlyReaper/" + r.path + "/attack/" + e + ".png", {
+                flip: !0,
+                dontDownload: r.skinId > 0
+            }),
+            game.loadSprite("ghostlyReaper_" + e + "_attack_right" + (r.skinId > 0 ? "_" + r.skinId : ""), "characters/ghostlyReaper/" + r.path + "/attack/" + e + ".png", {
+                dontDownload: r.skinId > 0
+            })
+    }
+    skinsPreview.pumpkinGhost[0] = "pumpkinGhost_1_right";
+    for (a = [{
+        skinId: 0,
+        path: "standard"
+    }, {
+        skinId: 1,
+        path: "bomb"
+    }, {
+        skinId: 2,
+        path: "demonic"
+    }, {
+        skinId: 3,
+        path: "rebellious"
+    }, {
+        skinId: 4,
+        path: "ninja"
+    }, {
+        skinId: 5,
+        path: "waiter"
+    }, {
+        skinId: 6,
+        path: "phantom"
+    }, {
+        skinId: 7,
+        path: "halloween2021"
+    }, {
+        skinId: 8,
+        path: "xmas2021"
+    }, {
+        skinId: 9,
+        path: "leprechaun"
+    }, {
+        skinId: 10,
+        path: "easter2022"
+    }, {
+        skinId: 11,
+        path: "pirate"
+    }, {
+        skinId: 12,
+        path: "cultist"
+    }, {
+        skinId: 13,
+        path: "halloween2022"
+    }, {
+        skinId: 14,
+        path: "xmas2022"
+    }, {
+        skinId: 15,
+        path: "ghostly"
+    }, {
+        skinId: 16,
+        path: "robber"
+    }, {
+        skinId: 17,
+        path: "chef"
+    }, {
+        skinId: 18,
+        path: "farmer"
+    }, {
+        skinId: 19,
+        path: "patrick2023"
+    }, {
+        skinId: 20,
+        path: "easter2023"
+    }, {
+        skinId: 21,
+        path: "darkmatter"
+    }, {
+        skinId: 22,
+        path: "halloween2023"
+    }, {
+        skinId: 23,
+        path: "xmas2023v2"
+    }, {
+        skinId: 24,
+        path: "patrick2024"
+    }, {
+        skinId: 25,
+        path: "easter2024"
+    }, {
+        skinId: 26,
+        path: "halloween2024"
+    }, {
+        skinId: 27,
+        path: "xmas2024"
+    }, {
+        skinId: 28,
+        path: "mummy"
+    }, {
+        skinId: 29,
+        path: "patrick2025"
+    }, {
+        skinId: 30,
+        path: "easter2025"
+    }, {
+        skinId: 31,
+        path: "policeman"
+    }, {
+        skinId: 32,
+        path: "halloween2025"
+    }, {
+        skinId: 33,
+        path: "frosty"
+    }, {
+        skinId: 34,
+        path: "hooded"
+    }, {
+        skinId: 35,
+        path: "nightmare"
+    }, {
+        skinId: 36,
+        path: "dragonLord"
+    }, {
+        skinId: 37,
+        path: "cool"
+    }, {
+        skinId: 38,
+        path: "anarchess"
+    }],
+    o = 0; o < a.length; o++) {
+        for (r = a[o],
+        e = 1; e <= 9; e++)
+            game.loadSprite("pumpkinGhost_" + e + "_left" + (r.skinId > 0 ? "_" + r.skinId : ""), "characters/pumpkinGhost/" + r.path + "/flying/" + e + ".png", {
+                flip: !0,
+                dontDownload: r.skinId > 0
+            }),
+            game.loadSprite("pumpkinGhost_" + e + "_right" + (r.skinId > 0 ? "_" + r.skinId : ""), "characters/pumpkinGhost/" + r.path + "/flying/" + e + ".png", {
+                dontDownload: r.skinId > 0
+            });
+        for (e = 1; e <= 5; e++)
+            game.loadSprite("pumpkinGhost_" + e + "_attack_left" + (r.skinId > 0 ? "_" + r.skinId : ""), "characters/pumpkinGhost/" + r.path + "/attack/" + e + ".png", {
+                flip: !0,
+                dontDownload: r.skinId > 0
+            }),
+            game.loadSprite("pumpkinGhost_" + e + "_attack_right" + (r.skinId > 0 ? "_" + r.skinId : ""), "characters/pumpkinGhost/" + r.path + "/attack/" + e + ".png", {
+                dontDownload: r.skinId > 0
+            })
+    }
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("alienBug_" + e + "_left", "characters/alienBug/" + e + ".png"),
+        game.loadSprite("alienBug_" + e + "_right", "characters/alienBug/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("stoneEater_" + e + "_left", "characters/stoneEater/" + e + ".png"),
+        game.loadSprite("stoneEater_" + e + "_right", "characters/stoneEater/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("demonicEggEater_" + e + "_left", "characters/demonicEggEater/" + e + ".png"),
+        game.loadSprite("demonicEggEater_" + e + "_right", "characters/demonicEggEater/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("demonicBat_" + e + "_left", "characters/demonicBat/" + e + ".png"),
+        game.loadSprite("demonicBat_" + e + "_right", "characters/demonicBat/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 18; e++)
+        game.loadSprite("demonicImp_" + e + "_left", "characters/demonicImp/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("demonicImp_" + e + "_right", "characters/demonicImp/" + e + ".png");
+    skinsPreview.ghost[0] = "ghost_1_right";
+    for (a = [{
+        skinId: 0,
+        path: "standard"
+    }, {
+        skinId: 1,
+        path: "demon"
+    }, {
+        skinId: 2,
+        path: "ice"
+    }, {
+        skinId: 3,
+        path: "enamored"
+    }, {
+        skinId: 4,
+        path: "toxic"
+    }, {
+        skinId: 5,
+        path: "halloween2021"
+    }, {
+        skinId: 6,
+        path: "xmas2021"
+    }, {
+        skinId: 7,
+        path: "leprechaun"
+    }, {
+        skinId: 8,
+        path: "easter2022"
+    }, {
+        skinId: 9,
+        path: "pirate"
+    }, {
+        skinId: 10,
+        path: "halloween2022"
+    }, {
+        skinId: 11,
+        path: "xmas2022"
+    }, {
+        skinId: 12,
+        path: "police"
+    }, {
+        skinId: 13,
+        path: "dapper"
+    }, {
+        skinId: 14,
+        path: "shadow"
+    }, {
+        skinId: 15,
+        path: "patrick2023"
+    }, {
+        skinId: 16,
+        path: "easter2023"
+    }, {
+        skinId: 17,
+        path: "halloween2023"
+    }, {
+        skinId: 18,
+        path: "xmas2023v2"
+    }, {
+        skinId: 19,
+        path: "witch"
+    }, {
+        skinId: 20,
+        path: "patrick2024"
+    }, {
+        skinId: 21,
+        path: "easter2024"
+    }, {
+        skinId: 22,
+        path: "halloween2024"
+    }, {
+        skinId: 23,
+        path: "xmas2024"
+    }, {
+        skinId: 24,
+        path: "patrick2025"
+    }, {
+        skinId: 25,
+        path: "easter2025"
+    }, {
+        skinId: 26,
+        path: "halloween2025"
+    }, {
+        skinId: 27,
+        path: "nightmare"
+    }, {
+        skinId: 28,
+        path: "dragonLord"
+    }],
+    o = 0; o < a.length; o++)
+        for (r = a[o],
+        e = 1; e <= 7; e++)
+            game.loadSprite("ghost_" + e + "_left" + (r.skinId > 0 ? "_" + r.skinId : ""), "characters/ghost/" + r.path + "/flying/" + e + ".png", {
+                dontDownload: r.skinId > 0
+            }),
+            game.loadSprite("ghost_" + e + "_right" + (r.skinId > 0 ? "_" + r.skinId : ""), "characters/ghost/" + r.path + "/flying/" + e + ".png", {
+                flip: !0,
+                dontDownload: r.skinId > 0
+            });
+    for (e = 1; e <= 3; e++)
+        game.loadSprite("overfedAlienBat_" + e + "_left", "characters/overfedAlienBat/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("overfedAlienBat_" + e + "_right", "characters/overfedAlienBat/" + e + ".png");
+    for (e = 1; e <= 2; e++)
+        game.loadSprite("alienBat_" + e + "_idle_left", "characters/alienBat/idle/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("alienBat_" + e + "_idle_right", "characters/alienBat/idle/" + e + ".png"),
+        game.loadSprite("alienBat_" + e + "_flying_left", "characters/alienBat/flying/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("alienBat_" + e + "_flying_right", "characters/alienBat/flying/" + e + ".png");
+    skinsPreview.grimReaper[0] = "grimReaper_1_idle_right";
+    a = [{
+        skinId: 0,
+        path: "black"
+    }, {
+        skinId: 1,
+        path: "premium"
+    }, {
+        skinId: 2,
+        path: "boss"
+    }, {
+        skinId: 3,
+        path: "purple"
+    }, {
+        skinId: 4,
+        path: "green"
+    }, {
+        skinId: 5,
+        path: "bony"
+    }, {
+        skinId: 6,
+        path: "imperial"
+    }, {
+        skinId: 7,
+        path: "policeman"
+    }, {
+        skinId: 8,
+        path: "star"
+    }, {
+        skinId: 9,
+        path: "orange",
+        v: 2
+    }, {
+        skinId: 10,
+        path: "heart"
+    }, {
+        skinId: 11,
+        path: "halloween2020"
+    }, {
+        skinId: 12,
+        path: "santa"
+    }, {
+        skinId: 13,
+        path: "knight"
+    }, {
+        skinId: 14,
+        path: "archangel"
+    }, {
+        skinId: 15,
+        path: "leprechaun"
+    }, {
+        skinId: 16,
+        path: "easter2021"
+    }, {
+        skinId: 17,
+        path: "bear"
+    }, {
+        skinId: 18,
+        path: "king"
+    }, {
+        skinId: 19,
+        path: "tiger"
+    }, {
+        skinId: 20,
+        path: "halloween2021"
+    }, {
+        skinId: 21,
+        path: "alien"
+    }, {
+        skinId: 22,
+        path: "rainbow"
+    }, {
+        skinId: 23,
+        path: "doctor"
+    }, {
+        skinId: 24,
+        path: "xmas2021"
+    }, {
+        skinId: 25,
+        path: "frosty"
+    }, {
+        skinId: 26,
+        path: "valentines2022"
+    }, {
+        skinId: 27,
+        path: "mummy"
+    }, {
+        skinId: 28,
+        path: "easter2022"
+    }, {
+        skinId: 29,
+        path: "pirate"
+    }, {
+        skinId: 30,
+        path: "captain"
+    }, {
+        skinId: 31,
+        path: "red",
+        v: 3
+    }, {
+        skinId: 32,
+        path: "cyborg"
+    }, {
+        skinId: 33,
+        path: "boss-old"
+    }, {
+        skinId: 34,
+        path: "halloween2022"
+    }, {
+        skinId: 35,
+        path: "xmas2022"
+    }, {
+        skinId: 36,
+        path: "valentines2023"
+    }, {
+        skinId: 37,
+        path: "laser"
+    }, {
+        skinId: 38,
+        path: "fallenKnight"
+    }, {
+        skinId: 39,
+        path: "jester"
+    }, {
+        skinId: 40,
+        path: "retro"
+    }, {
+        skinId: 41,
+        path: "thunderbolt"
+    }, {
+        skinId: 42,
+        path: "dinosaur"
+    }, {
+        skinId: 43,
+        path: "caveman"
+    }, {
+        skinId: 44,
+        path: "cactus"
+    }, {
+        skinId: 45,
+        path: "unicorn"
+    }, {
+        skinId: 46,
+        path: "farmer"
+    }, {
+        skinId: 47,
+        path: "wizard"
+    }, {
+        skinId: 48,
+        path: "viking"
+    }, {
+        skinId: 49,
+        path: "patrick2023"
+    }, {
+        skinId: 50,
+        path: "assasin"
+    }, {
+        skinId: 51,
+        path: "ragged"
+    }, {
+        skinId: 52,
+        path: "swamp"
+    }, {
+        skinId: 53,
+        path: "ninja2"
+    }, {
+        skinId: 54,
+        path: "easter2023"
+    }, {
+        skinId: 55,
+        path: "puzzle"
+    }, {
+        skinId: 56,
+        path: "pineapple"
+    }, {
+        skinId: 57,
+        path: "watermelon"
+    }, {
+        skinId: 58,
+        path: "avocado"
+    }, {
+        skinId: 59,
+        path: "nebula"
+    }, {
+        skinId: 60,
+        path: "horn"
+    }, {
+        skinId: 61,
+        path: "halloween2023"
+    }, {
+        skinId: 62,
+        path: "xmas2023"
+    }, {
+        skinId: 63,
+        path: "prehistoric"
+    }, {
+        skinId: 64,
+        path: "rockstar"
+    }, {
+        skinId: 65,
+        path: "lunar2024"
+    }, {
+        skinId: 66,
+        path: "valentines2024"
+    }, {
+        skinId: 67,
+        path: "faceless"
+    }, {
+        skinId: 68,
+        path: "patrick2024"
+    }, {
+        skinId: 69,
+        path: "spring",
+        v: 2
+    }, {
+        skinId: 70,
+        path: "easter2024",
+        v: 2
+    }, {
+        skinId: 71,
+        path: "summer"
+    }, {
+        skinId: 72,
+        path: "autumn"
+    }, {
+        skinId: 73,
+        path: "halloween2024"
+    }, {
+        skinId: 74,
+        path: "infernalBaron"
+    }, {
+        skinId: 75,
+        path: "miner"
+    }, {
+        skinId: 76,
+        path: "bee"
+    }, {
+        skinId: 77,
+        path: "mysterious"
+    }, {
+        skinId: 78,
+        path: "winter"
+    }, {
+        skinId: 79,
+        path: "xmas2024"
+    }, {
+        skinId: 80,
+        path: "lunar2025"
+    }, {
+        skinId: 81,
+        path: "valentines2025"
+    }, {
+        skinId: 82,
+        path: "samurai"
+    }, {
+        skinId: 83,
+        path: "zombie"
+    }, {
+        skinId: 84,
+        path: "patrick2025"
+    }, {
+        skinId: 85,
+        path: "easter2025"
+    }, {
+        skinId: 86,
+        path: "sheep"
+    }, {
+        skinId: 87,
+        path: "cyclops"
+    }, {
+        skinId: 88,
+        path: "imperialDestroyer"
+    }, {
+        skinId: 89,
+        path: "botAi"
+    }, {
+        skinId: 90,
+        path: "talos"
+    }, {
+        skinId: 91,
+        path: "azazel"
+    }, {
+        skinId: 92,
+        path: "phoenix"
+    }, {
+        skinId: 93,
+        path: "kitsune"
+    }, {
+        skinId: 94,
+        path: "halloween2025"
+    }, {
+        skinId: 95,
+        path: "steampunk"
+    }, {
+        skinId: 96,
+        path: "nightmare"
+    }, {
+        skinId: 97,
+        path: "voidEye"
+    }, {
+        skinId: 98,
+        path: "dragonLord"
+    }, {
+        skinId: 99,
+        path: "soldier"
+    }, {
+        skinId: 100,
+        path: "pixelvoices"
+    }, {
+        skinId: 101,
+        path: "pharaoh"
+    }, {
+        skinId: 102,
+        path: "goblin"
+    }, {
+        skinId: 103,
+        path: "neko"
+    }, {
+        skinId: 104,
+        path: "lilith"
+    }, {
+        skinId: 105,
+        path: "raven",
+        v: 2
+    }, {
+        skinId: 106,
+        path: "infernalBlacksmith"
+    }, {
+        skinId: 107,
+        path: "tree"
+    }, {
+        skinId: 108,
+        path: "skullWarrior"
+    }];
+    window.easterTime && (a[0].path = "easter"),
+    window.halloweenTime && (a[0].path = "halloween"),
+    window.birthdayTime && (a[0].path = "birthday2025");
+    for (o = 0; o < a.length; o++) {
+        var t = (r = a[o]).v ? "?v=" + r.v : "";
+        for (e = 1; e <= 6; e++)
+            game.loadSprite("grimReaper_" + e + "_idle_left" + (r.skinId > 0 ? "_" + r.skinId : ""), "characters/grimReaper/" + r.path + "/idle/" + e + ".png" + t, {
+                flip: !0,
+                dontDownload: r.skinId > 0
+            }),
+            game.loadSprite("grimReaper_" + e + "_idle_right" + (r.skinId > 0 ? "_" + r.skinId : ""), "characters/grimReaper/" + r.path + "/idle/" + e + ".png" + t, {
+                dontDownload: r.skinId > 0
+            });
+        for (e = 1; e <= 5; e++)
+            game.loadSprite("grimReaper_" + e + "_flying_left" + (r.skinId > 0 ? "_" + r.skinId : ""), "characters/grimReaper/" + r.path + "/flying/" + e + ".png" + t, {
+                flip: !0,
+                dontDownload: r.skinId > 0
+            }),
+            game.loadSprite("grimReaper_" + e + "_flying_right" + (r.skinId > 0 ? "_" + r.skinId : ""), "characters/grimReaper/" + r.path + "/flying/" + e + ".png" + t, {
+                dontDownload: r.skinId > 0
+            });
+        for (e = 1; e <= 8; e++)
+            game.loadSprite("grimReaper_" + e + "_attack_left" + (r.skinId > 0 ? "_" + r.skinId : ""), "characters/grimReaper/" + r.path + "/attack/" + e + ".png" + t, {
+                flip: !0,
+                dontDownload: r.skinId > 0
+            }),
+            game.loadSprite("grimReaper_" + e + "_attack_right" + (r.skinId > 0 ? "_" + r.skinId : ""), "characters/grimReaper/" + r.path + "/attack/" + e + ".png" + t, {
+                dontDownload: r.skinId > 0
+            })
+    }
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("boss1_" + e + "_left", "bosses/boss1/flying/" + e + ".png"),
+        game.loadSprite("boss1_" + e + "_right", "bosses/boss1/flying/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 3; e++)
+        game.loadSprite("dragonfly_" + e + "_left", "characters/dragonfly/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("dragonfly_" + e + "_right", "characters/dragonfly/" + e + ".png");
+    for (e = 1; e <= 9; e++)
+        game.loadSprite("stork_" + e + "_left", "characters/stork/" + e + ".png"),
+        game.loadSprite("stork_" + e + "_right", "characters/stork/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 3; e++)
+        game.loadSprite("skull_" + e + "_left", "characters/skull/" + e + ".png"),
+        game.loadSprite("skull_" + e + "_right", "characters/skull/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 12; e++)
+        game.loadSprite("butterfly_" + e + "_left", "characters/butterfly/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("butterfly_" + e + "_right", "characters/butterfly/" + e + ".png");
+    for (e = 1; e <= 12; e++)
+        game.loadSprite("alienBigEye_" + e + "_left", "characters/alienBigEye/" + e + ".png"),
+        game.loadSprite("alienBigEye_" + e + "_right", "characters/alienBigEye/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("alienAngryEye_" + e + "_left", "characters/alienAngryEye/" + e + ".png"),
+        game.loadSprite("alienAngryEye_" + e + "_right", "characters/alienAngryEye/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 12; e++)
+        game.loadSprite("pelican_" + e + "_left", "characters/pelican/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pelican_" + e + "_right", "characters/pelican/" + e + ".png");
+    for (e = 1; e <= 8; e++)
+        game.loadSprite("vulture_" + e + "_left", "characters/vulture/" + e + ".png"),
+        game.loadSprite("vulture_" + e + "_right", "characters/vulture/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 9; e++)
+        game.loadSprite("hornet_" + e + "_left", "characters/hornet/" + e + ".png"),
+        game.loadSprite("hornet_" + e + "_right", "characters/hornet/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 9; e++)
+        game.loadSprite("turkey_" + e + "_left", "characters/turkey/" + e + ".png"),
+        game.loadSprite("turkey_" + e + "_right", "characters/turkey/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("wasp_" + e + "_left", "characters/wasp/" + e + ".png"),
+        game.loadSprite("wasp_" + e + "_right", "characters/wasp/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("mosquito_" + e + "_left", "characters/mosquito/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("mosquito_" + e + "_right", "characters/mosquito/" + e + ".png");
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("blueBird_" + e + "_left", "characters/blueBird/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("blueBird_" + e + "_right", "characters/blueBird/" + e + ".png");
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("seagull_" + e + "_left", "characters/seagull/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("seagull_" + e + "_right", "characters/seagull/" + e + ".png");
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("redBird_" + e + "_left", "characters/redBird/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("redBird_" + e + "_right", "characters/redBird/" + e + ".png");
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("madBat_" + e + "_left", "characters/madBat/" + e + ".png"),
+        game.loadSprite("madBat_" + e + "_right", "characters/madBat/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("commonBlackbird_" + e + "_left", "characters/commonBlackbird/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("commonBlackbird_" + e + "_right", "characters/commonBlackbird/" + e + ".png");
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("pompadourCotinga_" + e + "_left", "characters/pompadourCotinga/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pompadourCotinga_" + e + "_right", "characters/pompadourCotinga/" + e + ".png");
+    for (e = 1; e <= 7; e++)
+        game.loadSprite("raven_" + e + "_left", "characters/raven/" + e + ".png"),
+        game.loadSprite("raven_" + e + "_right", "characters/raven/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("pterodactylChild_" + e + "_left", "characters/pterodactylChild/" + e + ".png"),
+        game.loadSprite("pterodactylChild_" + e + "_right", "characters/pterodactylChild/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("dragon_" + e + "_left", "characters/dragon/flying/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("dragon_" + e + "_right", "characters/dragon/flying/" + e + ".png"),
+        game.loadSprite("dragon_" + e + "_attack_left", "characters/dragon/attack/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("dragon_" + e + "_attack_right", "characters/dragon/attack/" + e + ".png");
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("phoenix_idle_" + e + "_left", "characters/phoenix/idle/" + e + ".png"),
+        game.loadSprite("phoenix_idle_" + e + "_right", "characters/phoenix/idle/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 8; e++)
+        game.loadSprite("phoenix_" + e + "_left", "characters/phoenix/flying/" + e + ".png"),
+        game.loadSprite("phoenix_" + e + "_right", "characters/phoenix/flying/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("pterodactyl_" + e + "_left", "characters/pterodactyl/" + e + ".png"),
+        game.loadSprite("pterodactyl_" + e + "_right", "characters/pterodactyl/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 20; e++)
+        game.loadSprite("swampMonster_" + e + "_left", "characters/swampMonster/" + e + ".png"),
+        game.loadSprite("swampMonster_" + e + "_right", "characters/swampMonster/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("pigeon_" + e + "_left", "characters/pigeon/" + e + ".png"),
+        game.loadSprite("pigeon_" + e + "_right", "characters/pigeon/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 5; e++)
+        game.loadSprite("hen_" + e + "_left", "characters/hen/" + e + ".png"),
+        game.loadSprite("hen_" + e + "_right", "characters/hen/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 5; e++)
+        game.loadSprite("duck_" + e + "_left", "characters/duck/" + e + ".png"),
+        game.loadSprite("duck_" + e + "_right", "characters/duck/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 10; e++)
+        game.loadSprite("mouse_" + e + "_left", "food/mouse/run/" + e + ".png?v=2", {
+            flip: !0
+        }),
+        game.loadSprite("mouse_" + e + "_right", "food/mouse/run/" + e + ".png?v=2");
+    for (e = 1; e <= 7; e++)
+        game.loadSprite("evilRat_" + e + "_left", "food/evilRat/" + e + ".png"),
+        game.loadSprite("evilRat_" + e + "_right", "food/evilRat/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 7; e++)
+        game.loadSprite("giantRat_" + e + "_left", "food/giantRat/" + e + ".png"),
+        game.loadSprite("giantRat_" + e + "_right", "food/giantRat/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 9; e++)
+        game.loadSprite("mouse_" + e + "_idle_left", "food/mouse/idle/" + e + ".png?v=2", {
+            flip: !0
+        }),
+        game.loadSprite("mouse_" + e + "_idle_right", "food/mouse/idle/" + e + ".png?v=2");
+    for (e = 1; e <= 15; e++)
+        game.loadSprite("easterRabbit_" + e + "_left", "misc/easterRabbit/run/" + e + ".png"),
+        game.loadSprite("easterRabbit_" + e + "_right", "misc/easterRabbit/run/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 14; e++)
+        game.loadSprite("easterRabbit_" + e + "_idle_left", "misc/easterRabbit/idle/" + e + ".png"),
+        game.loadSprite("easterRabbit_" + e + "_idle_right", "misc/easterRabbit/idle/" + e + ".png", {
+            flip: !0
+        });
+    if (window.halloweenTime || window.halloweenPreload) {
+        for (e = 1; e <= 9; e++)
+            game.loadSprite("halloweenGhost_" + e + "_idle_right", "misc/halloweenGhost/" + e + ".png"),
+            game.loadSprite("halloweenGhost_" + e + "_idle_left", "misc/halloweenGhost/" + e + ".png", {
+                flip: !0
+            });
+        for (e = 1; e <= 6; e++)
+            game.loadSprite("halloweenPumpkin_" + e + "_idle", "misc/halloweenPumpkin/" + e + ".png")
+    }
+    for (e = 1; e <= 8; e++)
+        game.loadSprite("smallDemon_" + e + "_left", "food/smallDemon/" + e + ".png"),
+        game.loadSprite("smallDemon_" + e + "_right", "food/smallDemon/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 15; e++)
+        game.loadSprite("lemming_" + e + "_left", "food/lemming/run/" + e + ".png"),
+        game.loadSprite("lemming_" + e + "_right", "food/lemming/run/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 7; e++)
+        game.loadSprite("lemming_" + e + "_idle_left", "food/lemming/idle/" + e + ".png"),
+        game.loadSprite("lemming_" + e + "_idle_right", "food/lemming/idle/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 11; e++)
+        game.loadSprite("penguin_" + e + "_left", "food/penguin/run/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("penguin_" + e + "_right", "food/penguin/run/" + e + ".png");
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("penguin_" + e + "_idle_left", "food/penguin/idle/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("penguin_" + e + "_idle_right", "food/penguin/idle/" + e + ".png");
+    for (e = 1; e <= 16; e++)
+        game.loadSprite("frog_" + e + "_idle_left", "food/frog/" + e + ".png"),
+        game.loadSprite("frog_" + e + "_idle_right", "food/frog/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 9; e++)
+        game.loadSprite("worm_" + e + "_left", "food/worm/run/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("worm_" + e + "_right", "food/worm/run/" + e + ".png");
+    for (e = 1; e <= 15; e++)
+        game.loadSprite("worm_" + e + "_idle_left", "food/worm/idle/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("worm_" + e + "_idle_right", "food/worm/idle/" + e + ".png");
+    for (e = 1; e <= 10; e++)
+        game.loadSprite("alienBigInsect_" + e + "_left", "food/alienBigInsect/run/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("alienBigInsect_" + e + "_right", "food/alienBigInsect/run/" + e + ".png");
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("alienBigInsect_" + e + "_idle_left", "food/alienBigInsect/idle/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("alienBigInsect_" + e + "_idle_right", "food/alienBigInsect/idle/" + e + ".png");
+    for (e = 1; e <= 8; e++)
+        game.loadSprite("blackWidow_" + e + "_left", "food/blackWidow/run/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("blackWidow_" + e + "_right", "food/blackWidow/run/" + e + ".png");
+    for (e = 1; e <= 7; e++)
+        game.loadSprite("blackWidow_" + e + "_idle_left", "food/blackWidow/idle/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("blackWidow_" + e + "_idle_right", "food/blackWidow/idle/" + e + ".png");
+    for (e = 1; e <= 15; e++)
+        game.loadSprite("mummy_" + e + "_left", "food/mummy/run/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("mummy_" + e + "_right", "food/mummy/run/" + e + ".png");
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("mummy_" + e + "_idle_left", "food/mummy/idle/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("mummy_" + e + "_idle_right", "food/mummy/idle/" + e + ".png");
+    for (e = 1; e <= 10; e++)
+        game.loadSprite("yeti_" + e + "_left", "food/yeti/run/" + e + ".png"),
+        game.loadSprite("yeti_" + e + "_right", "food/yeti/run/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("yeti_" + e + "_idle_left", "food/yeti/idle/" + e + ".png"),
+        game.loadSprite("yeti_" + e + "_idle_right", "food/yeti/idle/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 15; e++)
+        game.loadSprite("tyrannosaurus_" + e + "_left", "food/tyrannosaurus/run/" + e + ".png"),
+        game.loadSprite("tyrannosaurus_" + e + "_right", "food/tyrannosaurus/run/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 10; e++)
+        game.loadSprite("tyrannosaurus_" + e + "_idle_left", "food/tyrannosaurus/idle/" + e + ".png"),
+        game.loadSprite("tyrannosaurus_" + e + "_idle_right", "food/tyrannosaurus/idle/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 10; e++)
+        game.loadSprite("mammoth_" + e + "_left", "food/mammoth/run/" + e + ".png"),
+        game.loadSprite("mammoth_" + e + "_right", "food/mammoth/run/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("mammoth_" + e + "_idle_left", "food/mammoth/idle/" + e + ".png"),
+        game.loadSprite("mammoth_" + e + "_idle_right", "food/mammoth/idle/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 8; e++)
+        game.loadSprite("turtle_" + e + "_left", "food/turtle/run/" + e + ".png"),
+        game.loadSprite("turtle_" + e + "_right", "food/turtle/run/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 5; e++)
+        game.loadSprite("turtle_" + e + "_idle_left", "food/turtle/idle/" + e + ".png"),
+        game.loadSprite("turtle_" + e + "_idle_right", "food/turtle/idle/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("shark_" + e + "_left", "food/shark/" + e + ".png"),
+        game.loadSprite("shark_" + e + "_right", "food/shark/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("piranha_" + e + "_left", "food/piranha/" + e + ".png"),
+        game.loadSprite("piranha_" + e + "_right", "food/piranha/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 16; e++)
+        game.loadSprite("zombie_" + e + "_left", "food/zombie/run/" + e + ".png"),
+        game.loadSprite("zombie_" + e + "_right", "food/zombie/run/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("zombie_" + e + "_idle_left", "food/zombie/idle/" + e + ".png"),
+        game.loadSprite("zombie_" + e + "_idle_right", "food/zombie/idle/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 5; e++)
+        game.loadSprite("snake_" + e + "_left", "food/snake/run/" + e + ".png"),
+        game.loadSprite("snake_" + e + "_right", "food/snake/run/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 20; e++)
+        game.loadSprite("snake_" + e + "_idle_left", "food/snake/idle/" + e + ".png"),
+        game.loadSprite("snake_" + e + "_idle_right", "food/snake/idle/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 15; e++)
+        game.loadSprite("crocodile_" + e + "_left", "food/crocodile/run/" + e + ".png"),
+        game.loadSprite("crocodile_" + e + "_right", "food/crocodile/run/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 11; e++)
+        game.loadSprite("crocodile_" + e + "_idle_left", "food/crocodile/idle/" + e + ".png"),
+        game.loadSprite("crocodile_" + e + "_idle_right", "food/crocodile/idle/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 10; e++)
+        game.loadSprite("alienEye_" + e + "_left", "food/alienEye/run/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("alienEye_" + e + "_right", "food/alienEye/run/" + e + ".png");
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("alienEye_" + e + "_idle_left", "food/alienEye/idle/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("alienEye_" + e + "_idle_right", "food/alienEye/idle/" + e + ".png");
+    for (e = 1; e <= 5; e++)
+        game.loadSprite("fishPink_" + e + "_left", "food/fishPink/" + e + ".png?v=3"),
+        game.loadSprite("fishPink_" + e + "_right", "food/fishPink/" + e + ".png?v=3", {
+            flip: !0
+        });
+    for (e = 1; e <= 5; e++)
+        game.loadSprite("evilBat_" + e + "_left", "food/evilBat/" + e + ".png"),
+        game.loadSprite("evilBat_" + e + "_right", "food/evilBat/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("woodpecker_" + e + "_idle_left", "food/woodpecker/idle/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("woodpecker_" + e + "_idle_right", "food/woodpecker/idle/" + e + ".png");
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("woodpecker_" + e + "_idle", "food/woodpecker/idle/" + e + ".png");
+    for (e = 1; e <= 5; e++)
+        game.loadSprite("woodpecker_" + e + "_pecking", "food/woodpecker/pecking/" + e + ".png");
+    game.loadSprite("black_tile", "tiles/black_tile.png"),
+    game.loadSprite("jungleTop", "tiles/jungleTop.png"),
+    game.loadSprite("jungleBottom", "tiles/jungleBottom.png");
+    for (e = 1; e <= 3; e++)
+        game.loadSprite("dirt_grass" + e, "tiles/dirt_grass" + e + ".png");
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("dirt_graveyard_" + e, "tiles/dirt_graveyard_" + e + ".png");
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("dirt_top_graveyard_" + e, "tiles/dirt_top_graveyard_" + e + ".png");
+    for (e = 1; e <= 9; e++)
+        game.loadSprite("dirt_fill_graveyard_" + e, "tiles/dirt_fill_graveyard_" + e + ".png");
+    for (e = 1; e <= 2; e++)
+        game.loadSprite("arena_tile_top_" + e, "tiles/arena_tile_top_" + e + ".png"),
+        game.loadSprite("arena_tile_top_breakable_" + e, "tiles/arena_tile_top_breakable_" + e + ".png");
+    for (e = 1; e <= 2; e++)
+        game.loadSprite("dirt_snow" + e, "tiles/dirt_snow" + e + ".png");
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("dirt_top" + e, "tiles/dirt_top" + e + ".png");
+    for (e = 1; e <= 9; e++)
+        game.loadSprite("dirt" + e, "tiles/dirt" + e + ".png");
+    game.loadSprite("brick_grey", "tiles/brick_grey.png"),
+    game.loadSprite("brick_pyramid", "tiles/brick_pyramid.png"),
+    game.loadSprite("sand", "tiles/sand.png"),
+    game.loadSprite("greystone", "tiles/greystone.png"),
+    game.loadSprite("greystone_sand", "tiles/greystone_sand.png"),
+    game.loadSprite("lava", "tiles/lava.png"),
+    game.loadSprite("lava_mirrored", "tiles/lava.png", {
+        flip: !0
+    }),
+    game.loadSprite("greystone", "tiles/greystone.png"),
+    game.loadSprite("arena_tile_fill", "tiles/arena_tile_fill.png"),
+    game.loadSprite("arena_tile_fill_breakable", "tiles/arena_tile_fill_breakable.png"),
+    game.loadSprite("iceBlock", "tiles/iceBlock.png"),
+    game.loadSprite("ice_left", "tiles/ice_left.png"),
+    game.loadSprite("ice_right", "tiles/ice_right.png"),
+    game.loadSprite("ice_middle", "tiles/ice_middle.png"),
+    game.loadSprite("factory_floor_top", "tiles/factory_floor_top.png"),
+    game.loadSprite("factory_fill", "tiles/factory_fill.png"),
+    game.loadSprite("beam", "tiles/beam.png"),
+    game.loadSprite("toxic_water", "tiles/toxic_water.png"),
+    game.loadSprite("spiderweb_1", "tiles/spiderweb_1.png"),
+    game.loadSprite("spiderweb_2", "tiles/spiderweb_2.png"),
+    game.loadSprite("spiderweb_3", "tiles/spiderweb_3.png"),
+    game.loadSprite("arctic", "background/arctic.png"),
+    game.loadSprite("ocean", "background/ocean.png"),
+    game.loadSprite("fence", "tiles/fence.png?v=2"),
+    game.loadSprite("pipe", "tiles/pipe.png"),
+    game.loadSprite("pipe_upper", "tiles/pipe_upper.png"),
+    game.loadSprite("pipe_lower", "tiles/pipe_lower.png"),
+    game.loadSprite("water1", "tiles/water2_1.png?v=2"),
+    game.loadSprite("water2", "tiles/water2_2.png?v=2"),
+    game.loadSprite("water2_1", "tiles/water2_1.png?v=2"),
+    game.loadSprite("water2_2", "tiles/water2_2.png?v=2"),
+    game.loadSprite("water2_fill", "tiles/water2_fill.png"),
+    game.loadSprite("swamp", "tiles/swamp.png"),
+    game.loadSprite("cloud1", "clouds/cloud1.png"),
+    game.loadSprite("cloud2", "clouds/cloud2.png"),
+    game.loadSprite("cloud3", "clouds/cloud3.png"),
+    game.loadSprite("cloud4", "clouds/cloud4.png"),
+    window.christmasTime && (game.loadSprite("christmasTree", "background/christmasTree.png"),
+    game.loadSprite("giftBox", "misc/giftBox.png")),
+    game.loadSprite("flower_red", "tiles/flowers/flower_red.png"),
+    game.loadSprite("flower_yellow", "tiles/flowers/flower_yellow.png"),
+    game.loadSprite("flower_white", "tiles/flowers/flower_white.png"),
+    game.loadSprite("flower_purple", "tiles/flowers/flower_purple.png"),
+    game.loadSprite("flower_pink", "tiles/flowers/flower_pink.png"),
+    game.loadSprite("stalk_light_green", "tiles/stalk_light_green.png"),
+    game.loadSprite("boat_1", "tiles/boat_1.png"),
+    game.loadSprite("boat_2", "tiles/boat_2.png"),
+    game.loadSprite("boat_3", "tiles/boat_3.png"),
+    game.loadSprite("boat_4", "tiles/boat_4.png"),
+    game.loadSprite("boat_5", "tiles/boat_5.png"),
+    game.loadSprite("boat_6", "tiles/boat_6.png"),
+    game.loadSprite("boat_porthole", "tiles/boat_porthole.png"),
+    game.loadSprite("boat_cannon", "tiles/boat_cannon.png"),
+    game.loadSprite("boat_sail", "tiles/boat_sail.png"),
+    game.loadSprite("poo1", "food/poo/1.png?v=2"),
+    game.loadSprite("poo2", "food/poo/2.png?v=2"),
+    game.loadSprite("pumpkin", "food/pumpkin.png"),
+    game.loadSprite("alienFruit1", "food/alienFruit/1.png"),
+    game.loadSprite("alienFruit2", "food/alienFruit/2.png"),
+    game.loadSprite("alienFruit3", "food/alienFruit/3.png"),
+    game.loadSprite("deadFish", "food/deadFish.png?v=2"),
+    game.loadSprite("cat1", "food/cat/1.png"),
+    game.loadSprite("cat2", "food/cat/2.png");
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("crab_" + e, "food/crab/" + e + ".png");
+    for (e = 1; e <= 10; e++)
+        game.loadSprite("beehive_" + e, "food/beehive/" + e + ".png");
+    game.loadSprite("pig1", "food/pig/1.png"),
+    game.loadSprite("pig2", "food/pig/2.png"),
+    game.loadSprite("cherry", "food/cherry.png"),
+    game.loadSprite("currant", "food/currant.png"),
+    game.loadSprite("strawberry", "food/strawberry.png?v=2"),
+    game.loadSprite("starFruit", "food/starFruit.png?v=2"),
+    game.loadSprite("starfish1", "food/starfish/1.png"),
+    game.loadSprite("starfish2", "food/starfish/2.png"),
+    game.loadSprite("starfish3", "food/starfish/3.png"),
+    game.loadSprite("meat", "food/meat.png?v=2"),
+    game.loadSprite("seed", "food/seed.png?v=2"),
+    game.loadSprite("bread", "food/bread.png?v=2"),
+    game.loadSprite("egg", "food/egg.png"),
+    game.loadSprite("stone", "food/stone.png"),
+    game.loadSprite("eggRed", "food/egg_red.png"),
+    game.loadSprite("cosmicEgg", "food/egg_cosmic.png"),
+    game.loadSprite("ladybug", "food/ladybug.png?v=2"),
+    game.loadSprite("tree_1__no_vegetation_base", "background/tree_1__no_vegetation_base.png"),
+    game.loadSprite("tree_3_no_vegetation_base", "background/tree_3_no_vegetation_base.png"),
+    game.loadSprite("tree_1_bright_green", "background/tree_1_bright_green.png"),
+    game.loadSprite("tree_2_bright_green", "background/tree_2_bright_green.png"),
+    game.loadSprite("tree_3_bright_green", "background/tree_3_bright_green.png"),
+    game.loadSprite("standing_stone", "background/standing_stone.png"),
+    game.loadSprite("rock_1_blue", "background/rock_1_blue.png"),
+    game.loadSprite("rock_3_grey", "background/rock_3_grey.png"),
+    game.loadSprite("space_rock_1", "background/space_rock_1.png"),
+    game.loadSprite("space_rock_2", "background/space_rock_2.png"),
+    game.loadSprite("space_rock_3", "background/space_rock_3.png"),
+    game.loadSprite("cosmic_plant", "tiles/cosmic_plant.png"),
+    game.loadSprite("jungleTree1", "background/jungleTree1.png?v=2"),
+    game.loadSprite("jungleTree2", "background/jungleTree2.png?v=2"),
+    game.loadSprite("volcano_1", "background/volcano_1.png"),
+    game.loadSprite("volcano_2", "background/volcano_2.png"),
+    game.loadSprite("dino_bones", "background/dino_bones.png"),
+    game.loadSprite("bones", "background/bones.png");
+    for (e = 1; e <= 15; e++)
+        game.loadSprite("spike_trap_bg_" + e, "background/spike_trap_bg_" + e + ".png");
+    game.loadSprite("spike_trap_saw", "misc/spike_trap_saw.png"),
+    game.loadSprite("thorn_branch_2", "background/thorn_branch_2.png"),
+    game.loadSprite("thorn_branch_3", "background/thorn_branch_3.png"),
+    game.loadSprite("statue_1_with_vegetation", "background/statue_1_with_vegetation.png"),
+    game.loadSprite("open_coffin", "background/open_coffin.png"),
+    game.loadSprite("grave", "background/grave.png"),
+    game.loadSprite("coffin_dark", "background/coffin_dark.png"),
+    game.loadSprite("brick_post_1", "background/brick_post_1.png"),
+    game.loadSprite("strangeTree", "background/strangeTree.png?v=2"),
+    game.loadSprite("moon_full", "background/moon_full.png"),
+    game.loadSprite("moon_half", "background/moon_half.png"),
+    game.loadSprite("bush_1_bright_green", "bushes/bush_1_bright_green.png"),
+    game.loadSprite("igloo", "misc/igloo.png"),
+    game.loadSprite("strawberry_bush", "bushes/strawberry_bush.png");
+    for (e = 1; e <= 13; e++)
+        game.loadSprite("house_" + e, "houses/house_" + e + ".png");
+    game.loadSprite("arena", "background/arena.png"),
+    game.loadSprite("pixel_voices", "misc/pixel_voices.png");
+    for (e = 1; e <= 30; e++)
+        game.loadSprite("blackHole_" + e, "teleports/blackHole/" + e + ".png");
+    game.loadSprite("taxi", "teleports/taxi.png"),
+    game.loadSprite("wooden_doors", "teleports/wooden_doors.png?v=3"),
+    game.loadSprite("wooden_doors_ice", "teleports/wooden_doors_ice.png?v=3"),
+    game.loadSprite("wooden_doors_graveyard", "teleports/wooden_doors_graveyard.png?v=3"),
+    game.loadSprite("wooden_doors_city", "teleports/wooden_doors_city.png?v=3"),
+    game.loadSprite("wooden_doors_desert", "teleports/wooden_doors_desert.png?v=3"),
+    game.loadSprite("wooden_doors_jungle", "teleports/wooden_doors_jungle.png?v=3"),
+    game.loadSprite("wooden_doors_lava", "teleports/wooden_doors_lava.png?v=3"),
+    game.loadSprite("arena_doors_1", "teleports/arena_doors_1.png"),
+    game.loadSprite("arena_doors_2", "teleports/arena_doors_2.png?v=2"),
+    game.loadSprite("background_lightblue", "background/background_lightblue.png"),
+    game.loadSprite("background_lightblue_to_purple", "background/background_lightblue_to_purple.jpg"),
+    game.loadSprite("background_graveyard_left", "background/background_graveyard_left.png"),
+    game.loadSprite("background_graveyard_right", "background/background_graveyard_left.png", {
+        flip: !0
+    }),
+    game.loadSprite("background_graveyard_top_left", "background/background_graveyard_top_left.png"),
+    game.loadSprite("background_graveyard_top_right", "background/background_graveyard_top_left.png", {
+        flip: !0
+    }),
+    game.loadSprite("background_graveyard_top", "background/background_graveyard_top.png"),
+    window.easterTime ? (game.loadSprite("background_normal_1", "background/background_normal_easter_1.png"),
+    game.loadSprite("background_normal_2", "background/background_normal_easter_2.png"),
+    game.loadSprite("background_normal_3", "background/background_normal_easter_3.png"),
+    game.loadSprite("background_normal_bottom", "background/background_normal_bottom.png")) : window.christmasTime ? (game.loadSprite("background_normal_1", "background/background_snow_1.png"),
+    game.loadSprite("background_normal_2", "background/background_snow_2.png"),
+    game.loadSprite("background_normal_3", "background/background_snow_3.png"),
+    game.loadSprite("background_normal_bottom", "background/background_snow_bottom.png")) : (game.loadSprite("background_normal_1", "background/background_normal_1.png"),
+    game.loadSprite("background_normal_2", "background/background_normal_2.png"),
+    game.loadSprite("background_normal_3", "background/background_normal_3.png"),
+    game.loadSprite("background_normal_bottom", "background/background_normal_bottom.png")),
+    game.loadSprite("background_space_1", "background/background_space_1.png"),
+    game.loadSprite("background_space_2", "background/background_space_2.png"),
+    game.loadSprite("background_space_3", "background/background_space_3.png"),
+    game.loadSprite("background_space_4", "background/background_space_4.png"),
+    game.loadSprite("background_sea_1", "background/background_sea_1.png"),
+    game.loadSprite("background_sea_2", "background/background_sea_2.png"),
+    game.loadSprite("background_sea_3", "background/background_sea_3.png"),
+    game.loadSprite("background_sea_bottom", "background/background_sea_bottom.png"),
+    game.loadSprite("background_volcano_1", "background/background_volcano_1.png"),
+    game.loadSprite("background_volcano_2", "background/background_volcano_2.png"),
+    game.loadSprite("background_volcano_3", "background/background_volcano_3.png"),
+    game.loadSprite("background_desert_1", "background/background_desert_1.png"),
+    game.loadSprite("background_desert_2", "background/background_desert_2.png"),
+    game.loadSprite("background_desert_3", "background/background_desert_3.png"),
+    game.loadSprite("background_desert_bottom", "background/background_desert_bottom.png"),
+    game.loadSprite("background_snow_1", "background/background_snow_1.png"),
+    game.loadSprite("background_snow_2", "background/background_snow_2.png"),
+    game.loadSprite("background_snow_3", "background/background_snow_3.png"),
+    game.loadSprite("background_snow_bottom", "background/background_snow_bottom.png"),
+    game.loadSprite("background_jungle_1", "background/background_jungle_1.png"),
+    game.loadSprite("background_jungle_2", "background/background_jungle_2.png"),
+    game.loadSprite("background_jungle_3", "background/background_jungle_3.png"),
+    game.loadSprite("background_graveyard_1", "background/background_graveyard_1.png"),
+    game.loadSprite("background_graveyard_2", "background/background_graveyard_2.png"),
+    game.loadSprite("background_graveyard_3", "background/background_graveyard_3.png"),
+    game.loadSprite("background_graveyard_bottom", "background/background_graveyard_bottom.png"),
+    game.loadSprite("background_brown", "background/background_brown.png?v=2"),
+    game.loadSprite("background_grey", "background/background_grey.png?v=2"),
+    game.loadSprite("background_pyramid", "background/background_pyramid.png"),
+    game.loadSprite("background_ice", "background/background_ice.png"),
+    game.loadSprite("castle_bg", "background/castle_bg.png"),
+    game.loadSprite("iced_cave_bg", "background/iced_cave_bg.png"),
+    game.loadSprite("ship_bg", "background/ship_bg.png"),
+    game.loadSprite("arena_bg", "background/arena_bg.png"),
+    game.loadSprite("arena_window", "background/arena_window.png"),
+    game.loadSprite("arena_statue_1", "background/arena_statue_1.png"),
+    game.loadSprite("arena_flag", "background/arena_flag.png"),
+    game.loadSprite("king_throne", "background/king_throne.png"),
+    game.loadSprite("parchment_info", "misc/parchment_info.png"),
+    game.loadSprite("pillar_top", "background/pillar_top.png"),
+    game.loadSprite("pillar_center", "background/pillar_center.png"),
+    game.loadSprite("pillar_bottom", "background/pillar_bottom.png"),
+    game.loadSprite("arena_weapons", "background/arena_weapons.png"),
+    game.loadSprite("factory_bg", "background/factory_bg.png"),
+    game.loadSprite("pipe_exit", "background/pipe_exit.png"),
+    game.loadSprite("pipe_background", "background/pipe_background.png"),
+    game.loadSprite("toxic_machine", "background/toxic_machine.png"),
+    game.loadSprite("factory_lamp", "tiles/factory_lamp.png"),
+    game.loadSprite("green_light", "tiles/green_light.png");
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("fireball_" + e + "_left", "misc/fireball/" + e + ".png"),
+        game.loadSprite("fireball_" + e + "_right", "misc/fireball/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 7; e++)
+        game.loadSprite("explosion_" + e + "_left", "misc/explosion/" + e + ".png?v=2"),
+        game.loadSprite("explosion_" + e + "_right", "misc/explosion/" + e + ".png?v=2", {
+            flip: !0
+        });
+    for (e = 1; e <= 13; e++)
+        game.loadSprite("bubble_" + e, "misc/bubble/" + e + ".png?v=2"),
+        game.loadSprite("lava_bubble_" + e, "misc/lavaBubble/" + e + ".png");
+    for (e = 1; e <= 8; e++)
+        game.loadSprite("water_splash_" + e, "misc/waterSplash/" + e + ".png");
+    for (e = 1; e <= 8; e++)
+        game.loadSprite("explosion2_" + e, "misc/explosion2/" + e + ".png");
+    for (e = 1; e <= 2; e++)
+        game.loadSprite("gem_" + e, "misc/gem/" + e + ".png");
+    for (e = 1; e <= 19; e++)
+        game.loadSprite("chat_bubble_" + e, "misc/chatBubble/" + e + ".png");
+    game.loadSprite("volleyball", "misc/volleyball.png"),
+    game.loadSprite("shuriken", "misc/shuriken.png"),
+    game.loadSprite("waterDrop", "misc/waterDrop.png"),
+    game.loadSprite("volleyPost", "misc/volleyPost.png"),
+    game.loadSprite("mine_buffer", "misc/mine_buffer.png"),
+    game.loadSprite("mine_cart", "misc/mine_cart.png"),
+    game.loadSprite("mine_track", "misc/mine_track.png"),
+    game.loadSprite("roots", "misc/roots.png"),
+    game.loadSprite("potion_armor", "misc/potion_armor.png");
+    for (e = 1; e <= 9; e++)
+        game.loadSprite("br_portal_" + e, "misc/br_portal/" + e + ".png");
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("crate_" + e, "misc/crate/" + e + ".png");
+    for (e = 1; e <= 5; e++)
+        game.loadSprite("bear_trap_" + e, "misc/bear_trap/" + e + ".png");
+    for (e = 1; e <= 2; e++)
+        game.loadSprite("wall_spikes_" + e, "misc/wall_spikes/" + e + ".png");
+    for (e = 1; e <= 11; e++)
+        game.loadSprite("bomb_" + e, "misc/bomb/" + e + ".png");
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("ectoplasm_fire_" + e, "tiles/ectoplasm_fire/" + e + ".png");
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("torch_" + e, "tiles/torch/" + e + ".png");
+    for (e = 1; e <= 5; e++)
+        game.loadSprite("arena_torch_" + e, "tiles/arena_torch/" + e + ".png");
+    for (e = 1; e <= 3; e++)
+        game.loadSprite("kingJustice_" + e, "misc/kingJustice/" + e + ".png");
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("executioner_" + e, "misc/executioner/" + e + ".png");
+    for (e = 1; e <= 25; e++)
+        game.loadSprite("snow_animation_" + e, "background/snowAnimation/" + e + ".png");
+    game.loadSprite("armor_breaking_default", "effects/armor/default/1.png");
+    for (e = 1; e <= 10; e++)
+        game.loadSprite("fireworks_" + e, "effects/lvlup/fireworks/" + e + ".png");
+    skinsPreview.evolution_effects[1] = "fireworks_7";
+    for (e = 1; e <= 15; e++)
+        game.loadSprite("fireworks2_" + e, "effects/lvlup/fireworks_double/" + e + ".png");
+    skinsPreview.evolution_effects[2] = "fireworks2_7";
+    for (e = 1; e <= 20; e++)
+        game.loadSprite("stars_lvlup_" + e, "effects/lvlup/stars/" + e + ".png");
+    skinsPreview.evolution_effects[3] = "stars_lvlup_12";
+    for (e = 1; e <= 14; e++)
+        game.loadSprite("exploding_skull_" + e, "effects/kill/exploding_skull/" + e + ".png");
+    skinsPreview.kill_effects[1] = "exploding_skull_11";
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("dust_" + e, "effects/kill/dust/" + e + ".png");
+    skinsPreview.kill_effects[2] = "dust_1";
+    for (e = 1; e <= 11; e++)
+        game.loadSprite("exploding_nova_" + e, "effects/kill/exploding_nova/" + e + ".png");
+    skinsPreview.kill_effects[3] = "exploding_nova_8",
+    skinsPreview.pets[0] = "pet_(id)_1_right";
+    for (e = 1; e <= 8; e++)
+        game.loadSprite("pet_1_" + e + "_left", "pets/1/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_1_" + e + "_right", "pets/1/" + e + ".png");
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("pet_2_" + e + "_left", "pets/2/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_2_" + e + "_right", "pets/2/" + e + ".png");
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("pet_3_" + e + "_left", "pets/3/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_3_" + e + "_right", "pets/3/" + e + ".png");
+    for (e = 1; e <= 8; e++)
+        game.loadSprite("pet_4_" + e + "_left", "pets/4/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_4_" + e + "_right", "pets/4/" + e + ".png");
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("pet_5_" + e + "_left", "pets/5/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_5_" + e + "_right", "pets/5/" + e + ".png");
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("pet_6_" + e + "_left", "pets/6/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_6_" + e + "_right", "pets/6/" + e + ".png");
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("pet_7_" + e + "_left", "pets/7/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_7_" + e + "_right", "pets/7/" + e + ".png");
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("pet_8_" + e + "_left", "pets/8/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_8_" + e + "_right", "pets/8/" + e + ".png");
+    for (e = 1; e <= 8; e++)
+        game.loadSprite("pet_9_" + e + "_left", "pets/9/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_9_" + e + "_right", "pets/9/" + e + ".png");
+    for (e = 1; e <= 8; e++)
+        game.loadSprite("pet_10_" + e + "_left", "pets/10/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_10_" + e + "_right", "pets/10/" + e + ".png");
+    for (e = 1; e <= 8; e++)
+        game.loadSprite("pet_11_" + e + "_left", "pets/11/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_11_" + e + "_right", "pets/11/" + e + ".png");
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("pet_12_" + e + "_left", "pets/12/" + e + ".png"),
+        game.loadSprite("pet_12_" + e + "_right", "pets/12/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("pet_13_" + e + "_left", "pets/13/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_13_" + e + "_right", "pets/13/" + e + ".png");
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("pet_14_" + e + "_left", "pets/14/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_14_" + e + "_right", "pets/14/" + e + ".png");
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("pet_15_" + e + "_left", "pets/15/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_15_" + e + "_right", "pets/15/" + e + ".png");
+    for (e = 1; e <= 5; e++)
+        game.loadSprite("pet_16_" + e + "_left", "pets/16/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_16_" + e + "_right", "pets/16/" + e + ".png");
+    for (e = 1; e <= 5; e++)
+        game.loadSprite("pet_17_" + e + "_left", "pets/17/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_17_" + e + "_right", "pets/17/" + e + ".png");
+    for (e = 1; e <= 5; e++)
+        game.loadSprite("pet_18_" + e + "_left", "pets/18/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_18_" + e + "_right", "pets/18/" + e + ".png");
+    for (e = 1; e <= 3; e++)
+        game.loadSprite("pet_19_" + e + "_left", "pets/19/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_19_" + e + "_right", "pets/19/" + e + ".png");
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("pet_20_" + e + "_left", "pets/20/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_20_" + e + "_right", "pets/20/" + e + ".png");
+    for (e = 1; e <= 5; e++)
+        game.loadSprite("pet_21_" + e + "_left", "pets/21/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_21_" + e + "_right", "pets/21/" + e + ".png");
+    for (e = 1; e <= 10; e++)
+        game.loadSprite("pet_22_" + e + "_left", "pets/22/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_22_" + e + "_right", "pets/22/" + e + ".png");
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("pet_23_" + e + "_left", "pets/23/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_23_" + e + "_right", "pets/23/" + e + ".png");
+    for (e = 1; e <= 5; e++)
+        game.loadSprite("pet_24_" + e + "_left", "pets/24/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_24_" + e + "_right", "pets/24/" + e + ".png");
+    for (e = 1; e <= 8; e++)
+        game.loadSprite("pet_25_" + e + "_left", "pets/25/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_25_" + e + "_right", "pets/25/" + e + ".png");
+    for (e = 1; e <= 5; e++)
+        game.loadSprite("pet_26_" + e + "_left", "pets/26/" + e + ".png?v=2", {
+            flip: !0
+        }),
+        game.loadSprite("pet_26_" + e + "_right", "pets/26/" + e + ".png?v=2");
+    for (e = 1; e <= 5; e++)
+        game.loadSprite("pet_27_" + e + "_left", "pets/27/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_27_" + e + "_right", "pets/27/" + e + ".png");
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("pet_28_" + e + "_left", "pets/28/" + e + ".png"),
+        game.loadSprite("pet_28_" + e + "_right", "pets/28/" + e + ".png", {
+            flip: !0
+        });
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("pet_29_" + e + "_left", "pets/29/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_29_" + e + "_right", "pets/29/" + e + ".png");
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("pet_30_" + e + "_left", "pets/30/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_30_" + e + "_right", "pets/30/" + e + ".png");
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("pet_31_" + e + "_left", "pets/31/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_31_" + e + "_right", "pets/31/" + e + ".png");
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("pet_32_" + e + "_left", "pets/32/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_32_" + e + "_right", "pets/32/" + e + ".png");
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("pet_33_" + e + "_left", "pets/33/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_33_" + e + "_right", "pets/33/" + e + ".png");
+    for (e = 1; e <= 12; e++)
+        game.loadSprite("pet_34_" + e + "_left", "pets/34/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_34_" + e + "_right", "pets/34/" + e + ".png");
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("pet_35_" + e + "_left", "pets/35/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_35_" + e + "_right", "pets/35/" + e + ".png");
+    for (e = 1; e <= 4; e++)
+        game.loadSprite("pet_36_" + e + "_left", "pets/36/" + e + ".png", {
+            flip: !0
+        }),
+        game.loadSprite("pet_36_" + e + "_right", "pets/36/" + e + ".png");
+    for (e = 1; e <= 9; e++)
+        game.loadSprite("tombstone_wooden_" + e, "tombstones/wooden/" + e + ".png", {
+            dontDownload: 5 != e
+        });
+    skinsPreview.tombstones[1] = "tombstone_wooden_5";
+    for (e = 1; e <= 9; e++)
+        game.loadSprite("tombstone_stone_" + e, "tombstones/stone/" + e + ".png", {
+            dontDownload: 1 != e
+        });
+    skinsPreview.tombstones[2] = "tombstone_stone_1";
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("tombstone_flowers_" + e, "tombstones/flowers/" + e + ".png", {
+            dontDownload: 1 != e
+        });
+    skinsPreview.tombstones[3] = "tombstone_flowers_1";
+    for (e = 1; e <= 9; e++)
+        game.loadSprite("tombstone_demonic_" + e, "tombstones/demonic/" + e + ".png", {
+            dontDownload: 1 != e
+        });
+    skinsPreview.tombstones[4] = "tombstone_demonic_1";
+    for (e = 1; e <= 10; e++)
+        game.loadSprite("tombstone_broken_heart_" + e, "tombstones/brokenHeart/" + e + ".png", {
+            dontDownload: 1 != e
+        });
+    skinsPreview.tombstones[5] = "tombstone_broken_heart_1";
+    for (e = 1; e <= 6; e++)
+        game.loadSprite("tombstone_pixel_" + e, "tombstones/pixel/" + e + ".png", {
+            dontDownload: 1 != e
+        });
+    skinsPreview.tombstones[6] = "tombstone_pixel_1";
+    for (e = 1; e <= 10; e++)
+        game.loadSprite("tombstone_skeleton_" + e, "tombstones/skeleton/" + e + ".png", {
+            dontDownload: 1 != e
+        });
+    skinsPreview.tombstones[7] = "tombstone_skeleton_1";
+    for (e = 1; e <= 10; e++)
+        game.loadSprite("tombstone_sweet_soul_" + e, "tombstones/sweetSoul/" + e + ".png", {
+            dontDownload: 1 != e
+        });
+    skinsPreview.tombstones[8] = "tombstone_sweet_soul_1";
+    for (e = 1; e <= 10; e++)
+        game.loadSprite("tombstone_coffin_" + e, "tombstones/coffin/" + e + ".png", {
+            dontDownload: 1 != e
+        });
+    skinsPreview.tombstones[9] = "tombstone_coffin_1";
+    for (e = 1; e <= 13; e++)
+        game.loadSprite("tombstone_talos_" + e, "tombstones/talos/" + e + ".png", {
+            dontDownload: 1 != e
+        });
+    skinsPreview.tombstones[10] = "tombstone_talos_1",
+    game.loadSprite("skill_beginnersLuck", "skills/beginnersLuck.png"),
+    game.loadSprite("skill_flowerLove", "skills/flowerLove.png"),
+    game.loadSprite("skill_infection", "skills/infection.png"),
+    game.loadSprite("skill_poisonWasp", "skills/poisonWasp.png"),
+    game.loadSprite("skill_poisonSwampMonster", "skills/poisonSwampMonster.png"),
+    game.loadSprite("skill_grabPrey", "skills/grabPrey.png"),
+    game.loadSprite("skill_hunger", "skills/hunger.png"),
+    game.loadSprite("skill_diving", "skills/diving.png"),
+    game.loadSprite("skill_swoop", "skills/swoop.png"),
+    game.loadSprite("skill_fruitEater", "skills/fruitEater.png"),
+    game.loadSprite("skill_frogHunter", "skills/frogHunter.png"),
+    game.loadSprite("skill_echolocation", "skills/echolocation.png"),
+    game.loadSprite("skill_dig", "skills/dig.png"),
+    game.loadSprite("skill_excellentHunter", "skills/excellentHunter.png"),
+    game.loadSprite("skill_speedUp", "skills/speedUp.png"),
+    game.loadSprite("skill_bloodthirsty", "skills/bloodthirsty.png"),
+    game.loadSprite("skill_rage", "skills/rage.png"),
+    game.loadSprite("skill_scytheAttack", "skills/scytheAttack.png"),
+    game.loadSprite("skill_thickSkin", "skills/thickSkin.png"),
+    game.loadSprite("skill_toTheMoon", "skills/toTheMoon.png"),
+    game.loadSprite("skill_immortality", "skills/immortality.png"),
+    game.loadSprite("skill_hotBath", "skills/hotBath.png"),
+    game.loadSprite("skill_stoneSkin", "skills/stoneSkin.png"),
+    game.loadSprite("skill_fear", "skills/fear.png"),
+    game.loadSprite("skill_burnInHell", "skills/burnInHell.png"),
+    game.loadSprite("skill_fireball", "skills/fireball.png"),
+    game.loadSprite("skill_flame", "skills/flame.png"),
+    game.loadSprite("skill_layEgg", "skills/layEgg.png"),
+    leaderboardStars[1] = new Image,
+    leaderboardStars[1].crossOrigin = "Anonymous",
+    leaderboardStars[1].src = cdnServer + "images/star1.png",
+    leaderboardStars[2] = new Image,
+    leaderboardStars[2].crossOrigin = "Anonymous",
+    leaderboardStars[2].src = cdnServer + "images/star2.png",
+    leaderboardStars[3] = new Image,
+    leaderboardStars[3].crossOrigin = "Anonymous",
+    leaderboardStars[3].src = cdnServer + "images/star3.png",
+    discordAskImage.crossOrigin = "Anonymous",
+    discordAskImage.src = cdnServer + "emotes/2000.png",
+    arenaFragImage.crossOrigin = "Anonymous",
+    arenaFragImage.src = cdnServer + "emotes/3.png",
+    friendImage.crossOrigin = "Anonymous",
+    friendImage.src = cdnServer + "images/friends_icon.png?v=2",
+    spawnTimerImage.crossOrigin = "Anonymous",
+    spawnTimerImage.src = cdnServer + "images/spawn_timer_icon.png",
+    premiumImage.crossOrigin = "Anonymous",
+    premiumImage.src = cdnServer + "images/premium_icon.png"
+}
