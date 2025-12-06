@@ -11,8 +11,7 @@
 (function() {
     'use strict';
 
-    // --- UI --- //
-    const menu = document.createElement('div');
+        const menu = document.createElement('div');
     menu.style.position = 'fixed';
     menu.style.top = '10px';
     menu.style.left = '10px';
@@ -36,12 +35,10 @@
     menu.appendChild(autoAttackCheckbox);
     menu.appendChild(autoAttackLabel);
 
-        // --- Main Logic --- //
-    let autoAttackEnabled = false;
+            let autoAttackEnabled = false;
     let game = null;
     let originalDrawObjects = null;
-    // overlay canvas for our drawings
-    let overlayCanvas, overlayCtx;
+        let overlayCanvas, overlayCtx;
 
     const targetEnemyNames = ['ghost', 'ghostlyReaper', 'grimReaper', 'pumpkinGhost'];
 
@@ -131,27 +128,24 @@
 
     function overlayLoop(){
         if(!game || !overlayCtx){return requestAnimationFrame(overlayLoop);}        
-        // sync overlay position & size to game canvas bounding rect
-        const rect=game.canvas.getBoundingClientRect();
+                const rect=game.canvas.getBoundingClientRect();
         overlayCanvas.style.left=rect.left+'px';
         overlayCanvas.style.top=rect.top+'px';
         overlayCanvas.style.width=rect.width+'px';
         overlayCanvas.style.height=rect.height+'px';
-        // internal resolution sync
-        if(overlayCanvas.width!==game.canvas.width||overlayCanvas.height!==game.canvas.height){
+                if(overlayCanvas.width!==game.canvas.width||overlayCanvas.height!==game.canvas.height){
             overlayCanvas.width=game.canvas.width;
             overlayCanvas.height=game.canvas.height;
         }
         overlayCtx.clearRect(0,0,overlayCanvas.width,overlayCanvas.height);
         if(!autoAttackEnabled||!game.me){return requestAnimationFrame(overlayLoop);}        
         const player=game.me;
-        const triggerZoneWidth=100;
+        const triggerZoneWidth=player.width*0.8;
         const triggerZoneHeight=player.height;
         const leftTrigger={left:player.position.x-triggerZoneWidth,right:player.position.x,top:player.position.y+triggerZoneHeight,bottom:player.position.y};
         const rightTrigger={left:player.position.x+player.width,right:player.position.x+player.width+triggerZoneWidth,top:player.position.y+triggerZoneHeight,bottom:player.position.y};
         let leftHit=false, rightHit=false;
-        // draw red trigger zones
-        overlayCtx.save();
+                overlayCtx.save();
         overlayCtx.globalAlpha=0.3;
         overlayCtx.fillStyle='red';
         const zoneW=triggerZoneWidth*game.scaleX*game.zoom;
@@ -161,26 +155,31 @@
         const pRight=game.getRenderPosition(rightTrigger.left,rightTrigger.bottom);
         overlayCtx.fillRect(pRight.x,pRight.y-zoneH,zoneW,zoneH);
         overlayCtx.restore();
-        // detect enemies and draw their hitboxes
-        let enemyDetected=false;
+                let enemyDetected=false;
         for(const id in game.gameObjects){
             const obj=game.gameObjects[id];
             if(obj&&targetEnemyNames.includes(obj.name)){
                 const enemyCollider=getColliderRect(obj);
-                const p=game.getRenderPosition(enemyCollider.left,enemyCollider.bottom);
-                const eW=(enemyCollider.right-enemyCollider.left)*game.scaleX*game.zoom;
-                const eH=(enemyCollider.top-enemyCollider.bottom)*game.scaleY*game.zoom;
+                                const pSprite=game.getRenderPosition(obj.position.x,obj.position.y);
+                let sW=obj.width*game.scaleX*game.zoom;
+                let sH=obj.height*game.scaleY*game.zoom;
+                let factor=1;
+                if(obj.name==='ghostlyReaper'||obj.name==='pumpkinGhost') factor=0.8;
+                else if(obj.name==='grimReaper') factor=0.93;
+                const dx=sW*(1-factor)/2;
+                const dy=sH*(1-factor)/2;
+                sW*=factor;
+                sH*=factor;
                 overlayCtx.save();
                 overlayCtx.globalAlpha=0.4;
                 overlayCtx.strokeStyle='white';
-                overlayCtx.strokeRect(p.x,p.y-eH,eW,eH);
+                overlayCtx.strokeRect(pSprite.x+dx,pSprite.y-sH-dy,sW,sH);
                 overlayCtx.restore();
                 if(checkCollision(leftTrigger,enemyCollider)){leftHit=true; enemyDetected=true;}
                 if(checkCollision(rightTrigger,enemyCollider)){rightHit=true; enemyDetected=true;}
             }
         }
-        // draw triggers with bright opacity if hit
-        overlayCtx.save();
+                overlayCtx.save();
         const zoneW2=triggerZoneWidth*game.scaleX*game.zoom;
         const zoneH2=triggerZoneHeight*game.scaleY*game.zoom;
         const pLeft2=game.getRenderPosition(leftTrigger.left,leftTrigger.bottom);
