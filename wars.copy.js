@@ -167,6 +167,12 @@
     let game = null;
     let originalDrawObjectsProto = null;
     let overlayCanvas, overlayCtx;
+    // Scythe hitbox definitions for specific enemies
+    const scytheHitboxes = {
+        ghostlyReaper: { left: 32, top: 16.5, width: 43, height: 98.5 },
+        pumpkinGhost:  { left: 43, top: 68,   width: 62, height: 150   },
+        grimReaper:    { left: 42, top: 63,   width: 52, height: 141   },
+    };
     let scriptClosed = false;
     let lastAALoop = 0;
 
@@ -232,6 +238,7 @@
     function updateFpsLimit(){
         const val = parseInt(fpsInput.value, 10) || 0;
         if(!game || !val) return;
+        if(typeof window.gameLoopOPS === 'number') window.gameLoopOPS = val;
         if(typeof game.setMaxFPS === 'function') {
             game.setMaxFPS(val);
         } else if ('maxFPS' in game) {
@@ -406,13 +413,22 @@
                 };
                 const angleRad = (obj.rotation || 0) * Math.PI / 180;
 
-                const leftBarRect = { left: enemyCollider.left - barW, right: enemyCollider.left, top: enemyCollider.top, bottom: enemyCollider.bottom };
-                const rightBarRect = { left: enemyCollider.right, right: enemyCollider.right + barW, top: enemyCollider.top, bottom: enemyCollider.bottom };
+                let enemyBarPoly;
+                if (scytheHitboxes[obj.name]){
+                    const hb = scytheHitboxes[obj.name];
+                    const dir = (obj.flySide ?? 1);
+                    const hbRect = dir>=0 ?
+                        { left: enemyPivot.x + hb.left, right: enemyPivot.x + hb.left + hb.width, top: obj.position.y + hb.top, bottom: obj.position.y + hb.top + hb.height } :
+                        { left: enemyPivot.x - hb.left - hb.width, right: enemyPivot.x - hb.left, top: obj.position.y + hb.top, bottom: obj.position.y + hb.top + hb.height };
+                    enemyBarPoly = rectToPoly(hbRect);
+                } else {
+                    const leftBarRect = { left: enemyCollider.left - barW, right: enemyCollider.left, top: enemyCollider.top, bottom: enemyCollider.bottom };
+                    const rightBarRect = { left: enemyCollider.right, right: enemyCollider.right + barW, top: enemyCollider.top, bottom: enemyCollider.bottom };
 
-                const leftBarPoly = rotatePoly(rectToPoly(leftBarRect), enemyPivot, angleRad);
-                const rightBarPoly = rotatePoly(rectToPoly(rightBarRect), enemyPivot, angleRad);
-
-                const enemyBarPoly = ((obj.flySide ?? 1) >= 0) ? rightBarPoly : leftBarPoly;
+                    const leftBarPoly = rotatePoly(rectToPoly(leftBarRect), enemyPivot, angleRad);
+                    const rightBarPoly = rotatePoly(rectToPoly(rightBarRect), enemyPivot, angleRad);
+                    enemyBarPoly = ((obj.flySide ?? 1) >= 0) ? rightBarPoly : leftBarPoly;
+                }
 
                 const collided = polygonsIntersect(playerStripePoly, enemyBarPoly) || polygonsIntersect(playerOppositeStripePoly, enemyBarPoly);
                 if(collided){
