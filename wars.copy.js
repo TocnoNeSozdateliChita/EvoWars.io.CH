@@ -400,11 +400,13 @@
                     engineDrawPoly(enemyBarPoly, '#ff0000', 'rgba(255,0,0,0.22)');
                     // Auto-rotation logic: always face the enemy
                     if (player.position.x < obj.position.x) { // if enemy is to the right
-                        player.direction = 1; // face right
+                        player.direction = 1;
                         player.flySide = 1;
+                        player.moveDirection = 0;
                     } else { // if enemy is to the left
-                        player.direction = -1; // face left
+                        player.direction = -1;
                         player.flySide = -1;
+                        player.moveDirection = 180;
                     }
                 } else {
                     engineDrawPoly(enemyBarPoly, '#ff0000', null);
