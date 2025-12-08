@@ -320,6 +320,25 @@
         const playerCollider = getColliderRect(player);
 
         const BAR_WIDTH = 100;
+        // Rotate towards nearest target enemy
+        let nearestTarget = null;
+        let minDist = Infinity;
+        for(const id in engine.gameObjects){
+            const obj = engine.gameObjects[id];
+            if(obj && targetEnemyNames.includes(obj.name)){
+                const dx = obj.position.x - player.position.x;
+                const dist = Math.abs(dx);
+                if(dist < minDist){ minDist = dist; nearestTarget = obj; }
+            }
+        }
+        if(nearestTarget){
+            const desired = (nearestTarget.position.x > player.position.x) ? 1 : -1;
+            if(desired !== (player.flySide ?? player.direction ?? 1)){
+                player.flySide = desired;
+                player.direction = desired;
+                player.moveDirection = desired===1?0:180;
+            }
+        }
 
         const playerAngleRad = (player.moveDirection || 0) * Math.PI / 180;
         const side = (typeof player.direction === 'number' ? player.direction : (player.flySide || 1));
