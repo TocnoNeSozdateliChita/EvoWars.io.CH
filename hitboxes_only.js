@@ -18,6 +18,17 @@
     const TARGETS = Object.keys(HITBOXES);
     const LOOP_INTERVAL = 16; // ms
 
+    // Local toggle for auto-attack. Hotkey: P
+    let autoAttackEnabled = true;
+    document.addEventListener('keydown',e=>{ if(e.key==='p' || e.key==='р') autoAttackEnabled=!autoAttackEnabled; });
+
+    // Simple helper to trigger skill via synthetic key events
+    function triggerSkill(){
+        ['keydown','keyup'].forEach(type=>{
+            document.dispatchEvent(new KeyboardEvent(type,{key:'e',code:'KeyE',keyCode:69,which:69,bubbles:true}));
+        });
+    }
+
     // -----------------------------------------------------------------------------
     let installed = false;
     let overlayCanvas, overlayCtx;
@@ -102,7 +113,7 @@
 
     function autoAttackIfNeeded(engine, enemy){
         const me = engine.me;
-        if(!window.autoAttackEnabled) return;
+        if(!autoAttackEnabled) return;
 
         const hb = HITBOXES[enemy.name];
         const dir = (enemy.flySide ?? 1);
@@ -122,7 +133,7 @@
         };
 
         if(rectsOverlap(eRect, mRect)){
-            if(typeof window.skillUse === 'function') window.skillUse();
+            triggerSkill();
         }
     }
 })();
