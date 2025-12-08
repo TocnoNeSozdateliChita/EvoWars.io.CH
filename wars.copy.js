@@ -271,25 +271,9 @@
         return { min, max };
     }
 
-    function polygonsIntersect(polyA, polyB) {
-        const polys = [polyA, polyB];
-        for (let k = 0; k < 2; k++) {
-            const poly = polys[k];
-            for (let i = 0; i < poly.length; i++) {
-                const p1 = poly[i];
-                const p2 = poly[(i + 1) % poly.length];
-                const edge = { x: p2.x - p1.x, y: p2.y - p1.y };
-                let axis = { x: -edge.y, y: edge.x };
-                const len = Math.sqrt(axis.x * axis.x + axis.y * axis.y) || 1;
-                axis.x /= len; axis.y /= len;
-                const projA = projectPolygon(axis, polyA);
-                const projB = projectPolygon(axis, polyB);
-                if (projA.max < projB.min || projB.max < projA.min) {
-                    return false;
-                }
-            }
-        }
-        return true;
+    // Simplified AABB intersection check for performance
+    function aabbIntersect(boxA, boxB) {
+        return boxA.left < boxB.right && boxA.right > boxB.left && boxA.top > boxB.bottom && boxA.bottom < boxB.top;
     }
 
     function getColliderRect(obj) {
@@ -382,9 +366,14 @@
                 const leftBarPoly = rotatePoly(rectToPoly(leftBarRect), enemyPivot, angleRad);
                 const rightBarPoly = rotatePoly(rectToPoly(rightBarRect), enemyPivot, angleRad);
 
-                const enemyBarPoly = (player.position.x < obj.position.x) ? leftBarPoly : rightBarPoly;
+                // Correctly determine the closest enemy wall
+                const distToLeft = Math.hypot(player.position.x - leftBarPoly[0].x, player.position.y - leftBarPoly[0].y);
+                const distToRight = Math.hypot(player.position.x - rightBarPoly[0].x, player.position.y - rightBarPoly[0].y);
+                const enemyBarPoly = distToLeft < distToRight ? leftBarPoly : rightBarPoly;
 
-                const collided = polygonsIntersect(playerStripePoly, enemyBarPoly) || polygonsIntersect(playerOppositeStripePoly, enemyBarPoly);
+                const playerBox = getColliderRect(player);
+                const enemyBox = getColliderRect(obj);
+                const collided = aabbIntersect(playerBox, enemyBox);
                 if(collided){
                     hitDetected = true;
                     engineDrawPoly(enemyBarPoly, '#ff0000', 'rgba(255,0,0,0.22)');
@@ -515,7 +504,10 @@
                     overlayCtx.restore();
                 }
 
-                const enemyBarPoly = (player.position.x < obj.position.x) ? leftBarPoly : rightBarPoly;
+                // Correctly determine the closest enemy wall
+                const distToLeft = Math.hypot(player.position.x - leftBarPoly[0].x, player.position.y - leftBarPoly[0].y);
+                const distToRight = Math.hypot(player.position.x - rightBarPoly[0].x, player.position.y - rightBarPoly[0].y);
+                const enemyBarPoly = distToLeft < distToRight ? leftBarPoly : rightBarPoly;
 
                 const hit = polygonsIntersect(playerStripePoly, enemyBarPoly) || polygonsIntersect(playerOppositeStripePoly, enemyBarPoly);
 
@@ -602,9 +594,14 @@
             setupOverlay();
             const proto = Object.getPrototypeOf(game);
             originalDrawObjectsProto = proto.drawObjects;
-            proto.drawObjects = function() {
-                // Persistently apply FPS limit
+            // Hook into the game's animation loop for persistent FPS
+            const originalRequestAnimationFrame = window.requestAnimationFrame;
+            window.requestAnimationFrame = function(callback) {
                 updateFpsLimit();
+                return originalRequestAnimationFrame(callback);
+            };
+
+            proto.drawObjects = function() {
 
                 if (hdrEnabled) {
                     const newArgs = [...arguments];
