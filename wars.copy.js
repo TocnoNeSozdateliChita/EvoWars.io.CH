@@ -325,11 +325,12 @@
         let minDist = Infinity;
         for(const id in engine.gameObjects){
             const obj = engine.gameObjects[id];
-            if(obj && targetEnemyNames.includes(obj.name)){
-                const dx = obj.position.x - player.position.x;
-                const dist = Math.abs(dx);
-                if(dist < minDist){ minDist = dist; nearestTarget = obj; }
-            }
+            if(!obj) continue;
+            if(!obj.position) continue;
+            if(!targetEnemyNames.includes(obj.name)) continue;
+            const dx = obj.position.x - player.position.x;
+            const dist = Math.abs(dx);
+            if(dist < minDist){ minDist = dist; nearestTarget = obj; }
         }
         if(nearestTarget){
             const desired = (nearestTarget.position.x > player.position.x) ? 1 : -1;
