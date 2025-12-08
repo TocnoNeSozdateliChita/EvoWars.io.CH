@@ -4,6 +4,8 @@
 // @version      0.1
 // @description  Stand-alone auto-attack with scythe hitbox detection & red-square overlay. Requires MoonBlast! to be loaded before.
 // @author       Cascade
+// @grant        unsafeWindow
+// @run-at       document-end
 // ==/UserScript==
 
 (function(){
@@ -34,7 +36,7 @@
     let overlayCanvas, overlayCtx;
 
     const waitId = setInterval(() => {
-        if (window.game && window.game.drawObject && !installed) {
+        if (unsafeWindow.game && unsafeWindow.game.drawObject && !installed) {
             install();
             installed = true;
             clearInterval(waitId);
@@ -65,8 +67,8 @@
 
     // Hook engine.drawObject to render extra visuals & run auto-attack ----------------------------------
     function hookDraw(){
-        const proto = Object.getPrototypeOf(window.game);
-        const original = proto.drawObject || window.game.drawObject;
+        const proto = Object.getPrototypeOf(unsafeWindow.game);
+        const original = proto.drawObject || unsafeWindow.game.drawObject;
         proto.drawObject = function(entity, ...args){
             original.apply(this, [entity, ...args]);
             try { runLogic(this, entity); } catch(e) {}
