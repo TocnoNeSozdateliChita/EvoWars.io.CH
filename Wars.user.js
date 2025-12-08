@@ -166,6 +166,7 @@
 
         for (const id in engine.gameObjects) {
             const obj = engine.gameObjects[id];
+            if (obj === player) continue;
             if (obj && targetEnemyNames.includes(obj.name)) {
                 const enemyCollider = getColliderRect(obj);
                 const oldColor = obj.colliderColor;
@@ -263,6 +264,7 @@
 
         for(const id in game.gameObjects){
             const obj = game.gameObjects[id];
+            if(obj === player) continue;
             if(obj && targetEnemyNames.includes(obj.name)){
                 const enemyCollider = getColliderRect(obj);
 
