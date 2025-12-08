@@ -345,6 +345,9 @@
                 player.flySide = desired;
                 player.direction = desired;
                 player.moveDirection = desired===1?0:180;
+                        if(typeof gameServer !== 'undefined' && gameServer.emit && typeof socketMsgType !== 'undefined'){
+                            try { gameServer.emit(socketMsgType.FLY, desired); } catch(e) {}
+                        }
             }
         }
 
