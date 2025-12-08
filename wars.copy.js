@@ -388,14 +388,13 @@
                 if(collided){
                     hitDetected = true;
                     engineDrawPoly(enemyBarPoly, '#ff0000', 'rgba(255,0,0,0.22)');
-                    // Auto-rotation logic
-                    const curDir = (typeof player.direction === 'number' ? player.direction : (player.flySide || 1));
+                    // Auto-rotation logic: always face the enemy
                     if (player.position.x < obj.position.x) { // if enemy is to the right
-                        player.direction = -1; // turn left
-                        player.flySide = -1;
-                    } else { // if enemy is to the left
-                        player.direction = 1; // turn right
+                        player.direction = 1; // face right
                         player.flySide = 1;
+                    } else { // if enemy is to the left
+                        player.direction = -1; // face left
+                        player.flySide = -1;
                     }
                 } else {
                     engineDrawPoly(enemyBarPoly, '#ff0000', null);
@@ -471,7 +470,7 @@
         for(const id in game.gameObjects){
             const obj = game.gameObjects[id];
             if(obj === player) continue;
-            if(hdrEnabled && obj.type !== 'player' && obj !== engine.me) {
+            if(hdrEnabled && obj.type !== 'player' && obj !== game.me) {
                 // FPS boost: skip rendering non-player objects if enabled
                 continue;
             }
@@ -549,16 +548,21 @@
             overlayCtx.stroke();
             overlayCtx.restore();
         } else {
-            overlayCtx.beginPath();
-            const p0 = game.getRenderPosition(playerStripePoly[0].x, playerStripePoly[0].y);
-            overlayCtx.moveTo(p0.x, p0.y);
-            for (let i = 1; i < playerStripePoly.length; i++) {
-                const p = game.getRenderPosition(playerStripePoly[i].x, playerStripePoly[i].y);
-                overlayCtx.lineTo(p.x, p.y);
-            }
-            overlayCtx.closePath();
+            // Draw both player walls when not hitting
             overlayCtx.globalAlpha = 0.6;
-            overlayCtx.stroke();
+            function drawPlayerWall(poly) {
+                overlayCtx.beginPath();
+                const p0 = game.getRenderPosition(poly[0].x, poly[0].y);
+                overlayCtx.moveTo(p0.x, p0.y);
+                for (let i = 1; i < poly.length; i++) {
+                    const p = game.getRenderPosition(poly[i].x, poly[i].y);
+                    overlayCtx.lineTo(p.x, p.y);
+                }
+                overlayCtx.closePath();
+                overlayCtx.stroke();
+            }
+            drawPlayerWall(playerStripePoly);
+            drawPlayerWall(playerOppositeStripePoly);
             overlayCtx.globalAlpha = 1;
         }
 
@@ -599,6 +603,9 @@
             const proto = Object.getPrototypeOf(game);
             originalDrawObjectsProto = proto.drawObjects;
             proto.drawObjects = function() {
+                // Persistently apply FPS limit
+                updateFpsLimit();
+
                 if (hdrEnabled) {
                     const newArgs = [...arguments];
                     const originalObjects = newArgs[0];
