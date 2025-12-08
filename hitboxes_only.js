@@ -11,6 +11,8 @@
 (function(){
     'use strict';
 
+    const uw = (typeof unsafeWindow !== 'undefined') ? unsafeWindow : window;
+
     // --- CONFIG -----------------------------------------------------------------
     const HITBOXES = {
         ghostlyReaper : { left: 32, top: 16.5, width: 43, height: 98.5 },
@@ -36,7 +38,7 @@
     let overlayCanvas, overlayCtx;
 
     const waitId = setInterval(() => {
-        if (unsafeWindow.game && unsafeWindow.game.drawObject && !installed) {
+        if (uw.game && uw.game.drawObject && !installed) {
             install();
             installed = true;
             clearInterval(waitId);
@@ -67,8 +69,8 @@
 
     // Hook engine.drawObject to render extra visuals & run auto-attack ----------------------------------
     function hookDraw(){
-        const proto = Object.getPrototypeOf(unsafeWindow.game);
-        const original = proto.drawObject || unsafeWindow.game.drawObject;
+        const proto = Object.getPrototypeOf(uw.game);
+        const original = proto.drawObject || uw.game.drawObject;
         proto.drawObject = function(entity, ...args){
             original.apply(this, [entity, ...args]);
             try { runLogic(this, entity); } catch(e) {}
@@ -139,3 +141,4 @@
         }
     }
 })();
+
