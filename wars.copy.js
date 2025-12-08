@@ -11,65 +11,155 @@
 (function() {
     'use strict';
 
+    // Inject CSS for menu styling
+    const styles = `
+        @keyframes gradient-border {
+            0% { border-color: red; }
+            50% { border-color: yellow; }
+            100% { border-color: red; }
+        }
+        .moonblast-menu {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(20, 20, 20, 0.85);
+            color: white;
+            border-radius: 8px;
+            z-index: 10000;
+            border: 2px solid red;
+            animation: gradient-border 3s linear infinite;
+            font-family: Arial, sans-serif;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .moonblast-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background-color: rgba(0, 0, 0, 0.5);
+            cursor: move;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+        }
+        .moonblast-header h3 {
+            margin: 0;
+            font-size: 16px;
+        }
+        .moonblast-close-btn {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0 5px;
+            line-height: 1;
+        }
+        .moonblast-close-btn:hover {
+            color: red;
+        }
+        .moonblast-body {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .moonblast-control {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .moonblast-control label {
+            margin-right: 10px;
+        }
+        .moonblast-control input[type='checkbox'] {
+            margin-right: 5px;
+        }
+        .moonblast-control input[type='number'] {
+            width: 60px;
+        }
+        .moonblast-fps-group {
+             display: flex; align-items: center; gap: 5px;
+        }
+    `;
+    const styleSheet = document.createElement("style");
+    styleSheet.type = "text/css";
+    styleSheet.innerText = styles;
+    document.head.appendChild(styleSheet);
+
+
+    // Create Menu Structure
     const menu = document.createElement('div');
-    menu.style.position = 'fixed';
-    menu.style.top = '10px';
-    menu.style.left = '10px';
-    menu.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-    menu.style.color = 'white';
-    menu.style.padding = '10px';
-    menu.style.borderRadius = '5px';
-    menu.style.zIndex = '10000';
-    document.body.appendChild(menu);
+    menu.className = 'moonblast-menu';
+
+    const header = document.createElement('div');
+    header.className = 'moonblast-header';
 
     const title = document.createElement('h3');
     title.textContent = 'MoonBlast!';
-    menu.appendChild(title);
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = 'X';
-    closeBtn.style.marginLeft = '10px';
-    closeBtn.style.background = 'transparent';
-    closeBtn.style.color = 'white';
-    closeBtn.style.border = 'none';
-    closeBtn.style.cursor = 'pointer';
-    closeBtn.addEventListener('click', closeScript);
-    menu.appendChild(closeBtn);
 
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'moonblast-close-btn';
+    closeBtn.innerHTML = '&times;'; // Use HTML entity for a better 'X'
+    closeBtn.addEventListener('click', closeScript);
+
+    header.appendChild(title);
+    header.appendChild(closeBtn);
+
+    const body = document.createElement('div');
+    body.className = 'moonblast-body';
+
+    // -- Controls --
+    // Auto Attack
+    const aaControl = document.createElement('div');
+    aaControl.className = 'moonblast-control';
+    const autoAttackLabel = document.createElement('label');
+    autoAttackLabel.htmlFor = 'autoAttack';
+    autoAttackLabel.textContent = 'Auto Attack';
     const autoAttackCheckbox = document.createElement('input');
     autoAttackCheckbox.type = 'checkbox';
     autoAttackCheckbox.id = 'autoAttack';
-    const autoAttackLabel = document.createElement('label');
-    autoAttackLabel.htmlFor = 'autoAttack';
-    autoAttackLabel.textContent = 'Enable Auto Attack';
-    menu.appendChild(autoAttackCheckbox);
-    menu.appendChild(autoAttackLabel);
+    aaControl.appendChild(autoAttackLabel);
+    aaControl.appendChild(autoAttackCheckbox);
 
-    // HDR Graphics toggle
+    // HDR Graphics
+    const hdrControl = document.createElement('div');
+    hdrControl.className = 'moonblast-control';
+    const hdrLabel = document.createElement('label');
+    hdrLabel.htmlFor = 'hdrToggle';
+    hdrLabel.textContent = 'Boost FPS';
     const hdrCheckbox = document.createElement('input');
     hdrCheckbox.type = 'checkbox';
     hdrCheckbox.id = 'hdrToggle';
-    const hdrLabel = document.createElement('label');
-    hdrLabel.htmlFor = 'hdrToggle';
-    hdrLabel.textContent = 'HDR Graphics';
-    hdrLabel.style.marginLeft = '6px';
-    menu.appendChild(hdrCheckbox);
-    menu.appendChild(hdrLabel);
+    hdrControl.appendChild(hdrLabel);
+    hdrControl.appendChild(hdrCheckbox);
 
-    // Unlock FPS control
+    // Unlock FPS
+    const fpsControl = document.createElement('div');
+    fpsControl.className = 'moonblast-control';
     const fpsLabel = document.createElement('label');
     fpsLabel.textContent = 'Unlock FPS';
-    fpsLabel.style.marginLeft = '6px';
+    const fpsGroup = document.createElement('div');
+    fpsGroup.className = 'moonblast-fps-group';
     const fpsInput = document.createElement('input');
     fpsInput.type = 'number';
     fpsInput.min = '30';
     fpsInput.value = '144';
-    fpsInput.style.width = '60px';
-    fpsInput.style.marginLeft = '4px';
-    menu.appendChild(fpsLabel);
-    menu.appendChild(fpsInput);
+    const fpsBtn = document.createElement('button');
+    fpsBtn.textContent = 'Set';
+    fpsGroup.appendChild(fpsInput);
+    fpsGroup.appendChild(fpsBtn);
+    fpsControl.appendChild(fpsLabel);
+    fpsControl.appendChild(fpsGroup);
 
-    // stop propagation so menu click reposition doesn't trigger
-    [autoAttackCheckbox,hdrCheckbox,fpsInput].forEach(el=>el.addEventListener('click',e=>e.stopPropagation()));
+    body.appendChild(aaControl);
+    body.appendChild(hdrControl);
+    body.appendChild(fpsControl);
+
+    menu.appendChild(header);
+    menu.appendChild(body);
+    document.body.appendChild(menu);
+
 
     let autoAttackEnabled = false;
     let lastAttackTime = 0;
@@ -79,14 +169,27 @@
     let overlayCanvas, overlayCtx;
     let scriptClosed = false;
 
-    // menu reposition variables
-    let menuPosIndex = 0;
-    const menuPositions = [
-        {top:'10px',left:'10px',right:'',bottom:''},
-        {top:'10px',left:'',right:'10px',bottom:''},
-        {top:'',left:'',right:'10px',bottom:'10px'},
-        {top:'',left:'10px',right:'',bottom:'10px'}
-    ];
+    // Drag to move logic
+    let isDragging = false;
+    let offsetX, offsetY;
+
+    header.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        offsetX = e.clientX - menu.getBoundingClientRect().left;
+        offsetY = e.clientY - menu.getBoundingClientRect().top;
+        menu.style.cursor = 'grabbing';
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        menu.style.left = `${e.clientX - offsetX}px`;
+        menu.style.top = `${e.clientY - offsetY}px`;
+    });
+
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+        menu.style.cursor = 'default';
+    });
 
     const targetEnemyNames = ['ghost', 'ghostlyReaper', 'grimReaper', 'pumpkinGhost'];
 
@@ -100,7 +203,7 @@
         applyHdrGraphics(hdrEnabled);
     });
 
-    fpsInput.addEventListener('change', updateFpsLimit);
+    fpsBtn.addEventListener('click', updateFpsLimit);
 
     function closeScript() {
         scriptClosed = true;
@@ -119,29 +222,10 @@
         }
     }
 
-    // ---- Menu Reposition & Utilities ----
-    function updateMenuPos(){
-        const pos = menuPositions[menuPosIndex];
-        menu.style.top = pos.top;
-        menu.style.left = pos.left;
-        menu.style.right = pos.right;
-        menu.style.bottom = pos.bottom;
-    }
-    updateMenuPos();
-
-    menu.addEventListener('click', (e)=>{
-        if(e.target !== menu) return; // reposition only when background clicked
-        menuPosIndex = (menuPosIndex + 1) % menuPositions.length;
-        updateMenuPos();
-    });
 
     function applyHdrGraphics(on){
-        if(!game) return;
-        const ctx = game && (game.dynamicContext || game.context);
-        if(ctx){
-            ctx.filter = on ? 'saturate(1.35) contrast(1.1) brightness(1.05)' : 'none';
-        }
-        document.body.style.backgroundColor = on ? '#000' : '';
+        // This will now be used to hide non-essential objects for an FPS boost
+        // The actual logic will be in the rendering loop.
     }
 
     function updateFpsLimit(){
@@ -239,6 +323,10 @@
             y: player.position.y + player.height / 2
         };
         const playerStripePoly = rotatePoly(rectToPoly(playerStripeRect), playerPivot, playerAngleRad);
+        const playerOppositeStripeRect = side >= 0
+            ? { left: playerCollider.left - BAR_WIDTH, right: playerCollider.left, top: playerCollider.top, bottom: playerCollider.bottom }
+            : { left: playerCollider.right, right: playerCollider.right + BAR_WIDTH, top: playerCollider.top, bottom: playerCollider.bottom };
+        const playerOppositeStripePoly = rotatePoly(rectToPoly(playerOppositeStripeRect), playerPivot, playerAngleRad);
 
         ctx.save();
         const oldPlayerColor = player.colliderColor;
@@ -267,7 +355,7 @@
         }
 
         engineDrawPoly(playerStripePoly, '#ff0000', null);
-        engineDrawPoly(playerOppStripePoly, '#ff0000', null);
+        engineDrawPoly(playerOppositeStripePoly, '#ff0000', null);
 
         let hitDetected = false;
 
@@ -296,14 +384,20 @@
 
                 const enemyBarPoly = (player.position.x < obj.position.x) ? leftBarPoly : rightBarPoly;
 
-                const collided = polygonsIntersect(playerStripePoly, enemyBarPoly) || polygonsIntersect(playerOppStripePoly, enemyBarPoly);
+                const collided = polygonsIntersect(playerStripePoly, enemyBarPoly) || polygonsIntersect(playerOppositeStripePoly, enemyBarPoly);
                 if(collided){
                     hitDetected = true;
                     engineDrawPoly(enemyBarPoly, '#ff0000', 'rgba(255,0,0,0.22)');
+                    // Auto-rotation logic
                     const curDir = (typeof player.direction === 'number' ? player.direction : (player.flySide || 1));
-                    player.direction = -curDir;
-                    player.flySide = -curDir;
-                }else{
+                    if (player.position.x < obj.position.x) { // if enemy is to the right
+                        player.direction = -1; // turn left
+                        player.flySide = -1;
+                    } else { // if enemy is to the left
+                        player.direction = 1; // turn right
+                        player.flySide = 1;
+                    }
+                } else {
                     engineDrawPoly(enemyBarPoly, '#ff0000', null);
                 }
             }
@@ -365,6 +459,10 @@
             : { left: playerCollider.left - BAR_WIDTH, right: playerCollider.left, top: playerCollider.top, bottom: playerCollider.bottom };
         const playerPivot = { x: player.position.x + player.width/2, y: player.position.y + player.height/2 };
         const playerStripePoly = rotatePoly(rectToPoly(playerStripeRect), playerPivot, playerAngleRad);
+        const playerOppositeStripeRect = side >= 0
+            ? { left: playerCollider.left - BAR_WIDTH, right: playerCollider.left, top: playerCollider.top, bottom: playerCollider.bottom }
+            : { left: playerCollider.right, right: playerCollider.right + BAR_WIDTH, top: playerCollider.top, bottom: playerCollider.bottom };
+        const playerOppositeStripePoly = rotatePoly(rectToPoly(playerOppositeStripeRect), playerPivot, playerAngleRad);
 
         let anyHit = false;
 
@@ -373,6 +471,10 @@
         for(const id in game.gameObjects){
             const obj = game.gameObjects[id];
             if(obj === player) continue;
+            if(hdrEnabled && obj.type !== 'player' && obj !== engine.me) {
+                // FPS boost: skip rendering non-player objects if enabled
+                continue;
+            }
             if(obj && targetEnemyNames.includes(obj.name)){
                 const enemyCollider = getColliderRect(obj);
 
@@ -414,18 +516,15 @@
                     overlayCtx.restore();
                 }
 
-                const playerLeftPoly = playerStripePoly;
-                if (polygonsIntersect(playerLeftPoly, leftBarPoly)) {
+                const enemyBarPoly = (player.position.x < obj.position.x) ? leftBarPoly : rightBarPoly;
+
+                const hit = polygonsIntersect(playerStripePoly, enemyBarPoly) || polygonsIntersect(playerOppositeStripePoly, enemyBarPoly);
+
+                if (hit) {
                     anyHit = true;
-                    drawOverlayPoly(leftBarPoly, '#ff0000', 'rgba(255,0,0,0.22)');
+                    drawOverlayPoly(enemyBarPoly, '#ff0000', 'rgba(255,0,0,0.22)');
                 } else {
-                    drawOverlayPoly(leftBarPoly, '#ff0000', null, 0.85);
-                }
-                if (polygonsIntersect(playerLeftPoly, rightBarPoly)) {
-                    anyHit = true;
-                    drawOverlayPoly(rightBarPoly, '#ff0000', 'rgba(255,0,0,0.22)');
-                } else {
-                    drawOverlayPoly(rightBarPoly, '#ff0000', null, 0.85);
+                    drawOverlayPoly(enemyBarPoly, '#ff0000', null, 0.85);
                 }
             }
         }
@@ -500,7 +599,17 @@
             const proto = Object.getPrototypeOf(game);
             originalDrawObjectsProto = proto.drawObjects;
             proto.drawObjects = function() {
-                originalDrawObjectsProto.apply(this, arguments);
+                if (hdrEnabled) {
+                    const newArgs = [...arguments];
+                    const originalObjects = newArgs[0];
+                    newArgs[0] = originalObjects.filter(obj => 
+                        obj.isPlayer || obj.isMyPlayer || obj.type === 'player' || (targetEnemyNames.includes(obj.name) && obj.id !== this.me.id)
+                    );
+                    originalDrawObjectsProto.apply(this, newArgs);
+                } else {
+                    originalDrawObjectsProto.apply(this, arguments);
+                }
+
                 try {
                     if(!scriptClosed) performAutoAttackDraw(this);
                 } catch(e) {}
