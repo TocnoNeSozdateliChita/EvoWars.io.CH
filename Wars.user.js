@@ -2,7 +2,7 @@
 // @namespace    http://tampermonkey.net/
 // @version      0.3.0
 // @description  Cheat menu for EvoWorld with Auto Attack, HitBox Colors, FPS Unlock, Anti-Lag
-// @author       You
+// @author       TocnoNeSozdateliChita
 // @match        https://evoworld.io/
 // @grant        none
 // ==/UserScript==
@@ -2019,3 +2019,4 @@
     }, 500);
 
 })();
+
