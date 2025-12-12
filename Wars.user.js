@@ -1,8 +1,8 @@
 // @name         EvoWorld Cheat Menu
 // @namespace    http://tampermonkey.net/
-// @version      0.2.0
-// @description  Cheat menu for EvoWorld.
-// @author       TocnoNeSozdateliChita
+// @version      0.3.1
+// @description  Cheat menu for EvoWorld with Auto Attack, HitBox Colors, FPS Unlock, Anti-Lag
+// @author       You
 // @match        https://evoworld.io/
 // @grant        none
 // ==/UserScript==
@@ -43,7 +43,14 @@
         },
         autoAttack: {
             showHitbox: true,
-            enableTurns: false
+            enableTurns: false,
+            targetEnemies: ['grimReaper', 'ghostlyReaper', 'pumpkinGhost'],
+            enemyHitboxes: {
+                grimReaper: { left: 0, right: 0, top: 0, bottom: 0 },
+                ghostlyReaper: { left: 0, right: 0, top: 0, bottom: 0 },
+                pumpkinGhost: { left: 0, right: 0, top: 0, bottom: 0 },
+                ghost: { left: 0, right: 0, top: 0, bottom: 0 }
+            }
         },
         zoom: {
             enabled: false,
@@ -648,32 +655,31 @@
         minZoom: 0.05,
         maxZoom: 5.0,
         wheelHandler: null,
-        originalSetZoom: null,
+        initialized: false,
 
         init() {
+            if (this.initialized) return;
+            this.initialized = true;
             const self = this;
-            
-            // Intercept Engine.prototype.setZoom to remove limits
+
+            // Intercept Engine.prototype.setZoom to remove limits and use our level
             if (window.game) {
                 const proto = Object.getPrototypeOf(window.game);
-                if (proto && proto.setZoom && !this.originalSetZoom) {
-                    this.originalSetZoom = proto.setZoom;
+                if (proto && proto.setZoom) {
                     proto.setZoom = function(t) {
                         if (self.enabled) {
-                            // Use our custom zoom level, ignore the passed value
+                            // IGNORE the passed value, use our custom zoom level
                             t = self.level;
-                        }
-                        // Apply with our limits or original limits
-                        if (self.enabled) {
-                            if (t < self.minZoom) t = self.minZoom;
-                            if (t > self.maxZoom) t = self.maxZoom;
                         } else {
+                            // Original limits when disabled
                             if (t > 2) t = 2;
                             if (t < 1) t = 1;
                         }
-                        // Original setZoom logic
-                        if (this.zoom !== t) {
-                            this.zoom = t;
+                        // Always set zoom (removed the !== check to ensure it applies)
+                        this.zoom = t;
+                        // Only clear static objects if zoom actually changed significantly
+                        if (Math.abs(this._lastZoom - t) > 0.001 || !this._lastZoom) {
+                            this._lastZoom = t;
                             this.staticCanvasRenderOffset.restX = 0;
                             this.staticCanvasRenderOffset.restY = 0;
                             this.staticCanvasRenderOffset.x = 0;
@@ -691,19 +697,15 @@
                 if (!this.enabled) return;
                 e.preventDefault();
                 // Scroll down = zoom out (smaller), scroll up = zoom in (bigger)
-                const delta = e.deltaY > 0 ? -0.1 : 0.1;
+                const delta = e.deltaY > 0 ? -0.05 : 0.05;
                 this.level = Math.max(this.minZoom, Math.min(this.maxZoom, this.level + delta));
                 SettingsManager.set('zoom.level', this.level);
-                // Force immediate zoom update
-                if (window.game) {
-                    window.game.setZoom(this.level);
-                }
                 // Update slider if visible
                 const slider = document.querySelector('[data-setting="zoom.level"]');
                 if (slider) {
                     slider.value = this.level;
                     const valueDisplay = slider.parentElement.querySelector('.cheat-menu-slider-value');
-                    if (valueDisplay) valueDisplay.textContent = this.level.toFixed(1);
+                    if (valueDisplay) valueDisplay.textContent = this.level.toFixed(2);
                 }
             };
         },
@@ -715,19 +717,11 @@
             if (window.game && window.game.canvas) {
                 window.game.canvas.addEventListener('wheel', this.wheelHandler, { passive: false });
             }
-            // Apply zoom immediately
-            if (window.game) {
-                window.game.setZoom(this.level);
-            }
         },
 
         disable() {
             this.enabled = false;
             SettingsManager.set('zoom.enabled', false);
-            // Reset to default zoom
-            if (window.game) {
-                window.game.setZoom(1);
-            }
             // Remove wheel listener
             if (window.game && window.game.canvas) {
                 window.game.canvas.removeEventListener('wheel', this.wheelHandler);
@@ -742,9 +736,6 @@
         setLevel(level) {
             this.level = Math.max(this.minZoom, Math.min(this.maxZoom, parseFloat(level)));
             SettingsManager.set('zoom.level', this.level);
-            if (this.enabled && window.game) {
-                window.game.setZoom(this.level);
-            }
         },
 
         applySettings(settings) {
@@ -904,8 +895,38 @@
         }
         .cheat-menu-submenu.open { display: block; }
         .cheat-menu-submenu-title { font-size: 11px; color: rgba(255, 255, 255, 0.4); margin-bottom: 8px; text-transform: uppercase; }
+        .cheat-menu-hitbox-group { margin-bottom: 10px; padding: 8px; background: rgba(0, 0, 0, 0.2); border-radius: 4px; }
+        .cheat-menu-hitbox-title { font-size: 11px; color: rgba(255, 255, 255, 0.7); margin-bottom: 6px; }
+        .cheat-menu-hitbox-row { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+        .cheat-menu-hitbox-row span { font-size: 10px; color: rgba(255, 255, 255, 0.5); min-width: 12px; }
+        .cheat-menu-hitbox-input {
+            width: 40px; padding: 3px 4px; font-size: 11px; background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 3px; color: #fff; text-align: center;
+        }
+        .cheat-menu-hitbox-input:focus { outline: none; border-color: #667eea; }
     `;
 
+    // ==================== AUTO ATTACK SHARED VARIABLES ====================
+    // (Declared here so MenuManager can access them)
+    
+    // All available enemies that can be targeted
+    const ALL_ENEMY_TYPES = [
+        { id: 'grimReaper', name: 'Grim Reaper', default: true },
+        { id: 'ghostlyReaper', name: 'Ghostly Reaper', default: true },
+        { id: 'pumpkinGhost', name: 'Pumpkin Ghost', default: true },
+        { id: 'ghost', name: 'Ghost', default: false } // No scythe, immortal
+    ];
+    
+    // Current target enemies (loaded from settings)
+    let targetEnemyNames = ['grimReaper', 'ghostlyReaper', 'pumpkinGhost'];
+    
+    // Custom enemy attack zone offsets (adjustments to red attack walls)
+    let enemyAttackZoneOffsets = {
+        grimReaper: { left: 0, right: 0, top: 0, bottom: 0 },
+        ghostlyReaper: { left: 0, right: 0, top: 0, bottom: 0 },
+        pumpkinGhost: { left: 0, right: 0, top: 0, bottom: 0 },
+        ghost: { left: 0, right: 0, top: 0, bottom: 0 }
+    };
 
     // ==================== MENU MANAGER ====================
 
@@ -919,6 +940,7 @@
         fakeProfile: { enabled: false, nickname: '', level: '' },
 
         init() {
+            console.log('[CheatMenu] Initializing...');
             this.injectStyles();
             this.createMenu();
             this.setupHotkey();
@@ -926,6 +948,7 @@
             this.applyModuleSettings();
             this.startMetricsUpdate();
             this.loadFakeProfile();
+            console.log('[CheatMenu] Initialized successfully');
         },
 
         injectStyles() {
@@ -985,6 +1008,10 @@
                                     <span class="cheat-menu-label">Show Hitbox Visuals</span>
                                     <div class="cheat-menu-toggle" data-setting="autoAttack.showHitbox"></div>
                                 </div>
+                                <div class="cheat-menu-submenu-title" style="margin-top:12px;">Target Enemies</div>
+                                <div id="enemy-targets-list"></div>
+                                <div class="cheat-menu-submenu-title" style="margin-top:12px;">Enemy Attack Zones</div>
+                                <div id="enemy-hitbox-controls"></div>
                             </div>
                         </div>
                         <div class="cheat-menu-section">
@@ -1068,7 +1095,7 @@
                             <div class="cheat-menu-row">
                                 <span class="cheat-menu-label">Zoom Level</span>
                                 <div class="cheat-menu-slider-container">
-                                    <input type="range" class="cheat-menu-slider" data-setting="zoom.level" min="0.3" max="3.0" step="0.1" value="1.0">
+                                    <input type="range" class="cheat-menu-slider" data-setting="zoom.level" min="0.05" max="5.0" step="0.05" value="1.0">
                                     <span class="cheat-menu-slider-value">1.0</span>
                                 </div>
                             </div>
@@ -1173,7 +1200,7 @@
                 }
             });
 
-            closeBtn.addEventListener('click', () => this.hide());
+            closeBtn.addEventListener('click', () => this.shutdown());
 
             tabs.forEach(tab => {
                 tab.addEventListener('click', () => this.switchTab(tab.dataset.tab));
@@ -1228,6 +1255,117 @@
                     aaSubmenu.classList.toggle('open');
                 });
             }
+            
+            // Setup enemy targets list
+            this.setupEnemyTargetsList();
+            
+            // Setup enemy hitbox controls
+            this.setupEnemyHitboxControls();
+        },
+        
+        setupEnemyTargetsList() {
+            const container = this.menuElement.querySelector('#enemy-targets-list');
+            if (!container) return;
+            
+            // Load saved targets
+            const savedTargets = SettingsManager.get('autoAttack.targetEnemies') || ['grimReaper', 'ghostlyReaper', 'pumpkinGhost'];
+            targetEnemyNames = [...savedTargets];
+            
+            let html = '';
+            ALL_ENEMY_TYPES.forEach(enemy => {
+                const isChecked = targetEnemyNames.includes(enemy.id);
+                html += `
+                    <div class="cheat-menu-row">
+                        <span class="cheat-menu-label">${enemy.name}</span>
+                        <div class="cheat-menu-toggle ${isChecked ? 'active' : ''}" data-enemy-target="${enemy.id}"></div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+            
+            // Add event listeners
+            container.querySelectorAll('.cheat-menu-toggle').forEach(toggle => {
+                toggle.addEventListener('click', () => {
+                    const enemyId = toggle.dataset.enemyTarget;
+                    const isActive = toggle.classList.toggle('active');
+                    
+                    if (isActive) {
+                        if (!targetEnemyNames.includes(enemyId)) {
+                            targetEnemyNames.push(enemyId);
+                        }
+                    } else {
+                        targetEnemyNames = targetEnemyNames.filter(e => e !== enemyId);
+                    }
+                    
+                    SettingsManager.set('autoAttack.targetEnemies', targetEnemyNames);
+                });
+            });
+        },
+        
+        setupEnemyHitboxControls() {
+            console.log('[CheatMenu] setupEnemyHitboxControls called');
+            if (!this.menuElement) {
+                console.warn('[CheatMenu] menuElement is null');
+                return;
+            }
+            const container = this.menuElement.querySelector('#enemy-hitbox-controls');
+            if (!container) {
+                console.warn('[CheatMenu] enemy-hitbox-controls container not found');
+                return;
+            }
+            console.log('[CheatMenu] Found container, generating hitbox controls...');
+            
+            // Load saved hitbox offsets
+            const savedHitboxes = SettingsManager.get('autoAttack.enemyHitboxes') || {};
+            
+            let html = '';
+            ALL_ENEMY_TYPES.forEach(enemy => {
+                const offsets = savedHitboxes[enemy.id] || { left: 0, right: 0, top: 0, bottom: 0 };
+                // Update runtime variable
+                if (enemyAttackZoneOffsets[enemy.id]) {
+                    enemyAttackZoneOffsets[enemy.id] = { ...offsets };
+                }
+                
+                html += `
+                    <div class="cheat-menu-hitbox-group" data-enemy-hitbox="${enemy.id}">
+                        <div class="cheat-menu-hitbox-title">${enemy.name}</div>
+                        <div class="cheat-menu-hitbox-row">
+                            <span>L</span>
+                            <input type="number" class="cheat-menu-hitbox-input" data-side="left" value="${offsets.left}" min="-50" max="50">
+                            <span>R</span>
+                            <input type="number" class="cheat-menu-hitbox-input" data-side="right" value="${offsets.right}" min="-50" max="50">
+                            <span>T</span>
+                            <input type="number" class="cheat-menu-hitbox-input" data-side="top" value="${offsets.top}" min="-50" max="50">
+                            <span>B</span>
+                            <input type="number" class="cheat-menu-hitbox-input" data-side="bottom" value="${offsets.bottom}" min="-50" max="50">
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+            
+            // Add event listeners
+            container.querySelectorAll('.cheat-menu-hitbox-input').forEach(input => {
+                input.addEventListener('change', () => {
+                    const group = input.closest('.cheat-menu-hitbox-group');
+                    const enemyId = group.dataset.enemyHitbox;
+                    const side = input.dataset.side;
+                    const value = parseInt(input.value, 10) || 0;
+                    
+                    // Update runtime variable
+                    if (enemyAttackZoneOffsets[enemyId]) {
+                        enemyAttackZoneOffsets[enemyId][side] = value;
+                    }
+                    
+                    // Save to settings
+                    const currentHitboxes = SettingsManager.get('autoAttack.enemyHitboxes') || {};
+                    if (!currentHitboxes[enemyId]) {
+                        currentHitboxes[enemyId] = { left: 0, right: 0, top: 0, bottom: 0 };
+                    }
+                    currentHitboxes[enemyId][side] = value;
+                    SettingsManager.set('autoAttack.enemyHitboxes', currentHitboxes);
+                });
+            });
         },
 
         setupFeatureKeybinds() {
@@ -1482,18 +1620,54 @@
             });
         },
 
-        toggle() { this.isVisible ? this.hide() : this.show(); },
+        toggle() {
+            if (!this.menuElement) return;
+            this.isVisible ? this.hide() : this.show();
+        },
 
         show() {
+            if (!this.menuElement) return;
             this.isVisible = true;
             this.menuElement.classList.remove('hidden');
             SettingsManager.set('menu.visible', true);
         },
 
         hide() {
+            if (!this.menuElement) return;
             this.isVisible = false;
             this.menuElement.classList.add('hidden');
             SettingsManager.set('menu.visible', false);
+        },
+
+        // Completely shutdown the cheat - disable all features and remove menu
+        shutdown() {
+            // Disable all modules
+            if (HitboxColorModule.enabled) HitboxColorModule.disable();
+            if (ESPModule.enabled) ESPModule.disable();
+            if (FPSUnlockModule.enabled) FPSUnlockModule.disable();
+            if (AntiLagModule.enabled) AntiLagModule.disable();
+            if (ZoomModule.enabled) ZoomModule.disable();
+            if (NightVisionModule.enabled) NightVisionModule.disable();
+            if (IceParticlesModule.enabled) IceParticlesModule.stop();
+            
+            // Disable auto attack
+            autoAttackEnabled = false;
+            
+            // Reset fake profile
+            this.fakeProfile = { enabled: false, nickname: '', level: '' };
+            
+            // Remove menu from DOM
+            if (this.menuElement) {
+                this.menuElement.remove();
+                this.menuElement = null;
+            }
+            
+            // Remove overlay canvas
+            if (overlayCanvas) {
+                overlayCanvas.remove();
+            }
+            
+            console.log('[CheatMenu] Shutdown complete - all features disabled');
         },
 
         setupHotkey() {
@@ -1546,6 +1720,7 @@
         },
 
         updateToggleUI(setting, state) {
+            if (!this.menuElement) return; // Menu was shutdown
             const toggle = this.menuElement.querySelector(`[data-setting="${setting}"]`);
             if (toggle) {
                 toggle.classList.toggle('active', state);
@@ -1638,12 +1813,10 @@
     let autoAttackShowHitbox = true;  // Show hitbox visuals
     let autoAttackEnableTurns = false; // Enable attack turns (auto-rotate to enemy)
     let lastAttackTime = 0;
-    const ATTACK_COOLDOWN = 50;
+    const ATTACK_COOLDOWN = 100; // Minimum time between attack attempts (server has 500ms cooldown)
     let game = null;
     let originalDrawObjectsProto = null;
     let overlayCanvas, overlayCtx;
-
-    const targetEnemyNames = ['ghost', 'ghostlyReaper', 'grimReaper', 'pumpkinGhost'];
 
     // Load auto-attack settings
     function loadAutoAttackSettings() {
@@ -1651,6 +1824,16 @@
         if (settings) {
             autoAttackShowHitbox = settings.showHitbox !== false;
             autoAttackEnableTurns = settings.enableTurns || false;
+            if (settings.targetEnemies && Array.isArray(settings.targetEnemies)) {
+                targetEnemyNames = settings.targetEnemies;
+            }
+            if (settings.enemyHitboxes && typeof settings.enemyHitboxes === 'object') {
+                for (const enemyId in settings.enemyHitboxes) {
+                    if (enemyAttackZoneOffsets[enemyId]) {
+                        enemyAttackZoneOffsets[enemyId] = { ...enemyAttackZoneOffsets[enemyId], ...settings.enemyHitboxes[enemyId] };
+                    }
+                }
+            }
         }
     }
 
@@ -1711,6 +1894,21 @@
             bottom: obj.position.y + obj.height * obj.colliderRectangleOffset.bottom
         };
     }
+    
+    // Get attack zone offsets for enemy
+    function getEnemyAttackZoneOffsets(enemyName) {
+        return enemyAttackZoneOffsets[enemyName] || { left: 0, right: 0, top: 0, bottom: 0 };
+    }
+    
+    // Apply offsets to enemy attack zone (red wall)
+    function applyAttackZoneOffsets(rect, offsets) {
+        return {
+            left: rect.left - offsets.left,
+            right: rect.right + offsets.right,
+            top: rect.top + offsets.top,
+            bottom: rect.bottom - offsets.bottom
+        };
+    }
 
     // Check if any enemies exist in the game - FIX for auto-attack bug
     function hasEnemiesInRange() {
@@ -1722,6 +1920,7 @@
         const playerAngleRad = (player.moveDirection || 0) * Math.PI / 180;
         const side = (typeof player.direction === 'number' ? player.direction : (player.flySide || 1));
 
+        // Player attack zone - directly adjacent to player hitbox
         const playerStripeRect = side >= 0
             ? { left: playerCollider.right, right: playerCollider.right + BAR_WIDTH, top: playerCollider.top, bottom: playerCollider.bottom }
             : { left: playerCollider.left - BAR_WIDTH, right: playerCollider.left, top: playerCollider.top, bottom: playerCollider.bottom };
@@ -1730,14 +1929,18 @@
 
         for (const id in game.gameObjects) {
             const obj = game.gameObjects[id];
-            if (obj && targetEnemyNames.includes(obj.name) && !obj.deleted) {
+            if (obj && obj !== player && targetEnemyNames.includes(obj.name) && !obj.deleted) {
                 const enemyCollider = getColliderRect(obj);
                 const barW = BAR_WIDTH;
                 const pivot = { x: obj.position.x + obj.width / 2, y: obj.position.y + obj.height / 2 };
                 const angleRad = (obj.rotation || 0) * Math.PI / 180;
+                const zoneOffsets = getEnemyAttackZoneOffsets(obj.name);
 
-                const leftBarRect = { left: enemyCollider.left - barW, right: enemyCollider.left, top: enemyCollider.top, bottom: enemyCollider.bottom };
-                const rightBarRect = { left: enemyCollider.right, right: enemyCollider.right + barW, top: enemyCollider.top, bottom: enemyCollider.bottom };
+                // Enemy attack zones with custom offsets applied
+                let leftBarRect = { left: enemyCollider.left - barW, right: enemyCollider.left, top: enemyCollider.top, bottom: enemyCollider.bottom };
+                let rightBarRect = { left: enemyCollider.right, right: enemyCollider.right + barW, top: enemyCollider.top, bottom: enemyCollider.bottom };
+                leftBarRect = applyAttackZoneOffsets(leftBarRect, zoneOffsets);
+                rightBarRect = applyAttackZoneOffsets(rightBarRect, zoneOffsets);
 
                 const leftBarPoly = rotatePoly(rectToPoly(leftBarRect), pivot, angleRad);
                 const rightBarPoly = rotatePoly(rectToPoly(rightBarRect), pivot, angleRad);
@@ -1779,6 +1982,25 @@
         ctx.restore();
     }
 
+    // Helper function for drawing polygons (moved outside loop for performance)
+    function drawOverlayPoly(poly, strokeColor, fillColor, alpha = 1) {
+        overlayCtx.save();
+        overlayCtx.globalAlpha = alpha;
+        overlayCtx.beginPath();
+        const p0 = game.getRenderPosition(poly[0].x, poly[0].y);
+        overlayCtx.moveTo(p0.x, p0.y);
+        for (let i = 1; i < poly.length; i++) {
+            const p = game.getRenderPosition(poly[i].x, poly[i].y);
+            overlayCtx.lineTo(p.x, p.y);
+        }
+        overlayCtx.closePath();
+        overlayCtx.lineWidth = 3;
+        if (fillColor) { overlayCtx.fillStyle = fillColor; overlayCtx.fill(); }
+        overlayCtx.strokeStyle = strokeColor;
+        overlayCtx.stroke();
+        overlayCtx.restore();
+    }
+
     function overlayLoop() {
         if (!game || !overlayCtx) { return requestAnimationFrame(overlayLoop); }
         const rect = game.canvas.getBoundingClientRect();
@@ -1814,6 +2036,7 @@
         const playerAngleRad = (player.moveDirection || 0) * Math.PI / 180;
         const side = (typeof player.direction === 'number' ? player.direction : (player.flySide || 1));
 
+        // Player attack zone - directly adjacent to player hitbox
         const playerStripeRect = side >= 0
             ? { left: playerCollider.right, right: playerCollider.right + BAR_WIDTH, top: playerCollider.top, bottom: playerCollider.bottom }
             : { left: playerCollider.left - BAR_WIDTH, right: playerCollider.left, top: playerCollider.top, bottom: playerCollider.bottom };
@@ -1825,8 +2048,8 @@
 
         for (const id in game.gameObjects) {
             const obj = game.gameObjects[id];
-            // FIX: Check if object exists and is not deleted
-            if (obj && targetEnemyNames.includes(obj.name) && !obj.deleted) {
+            // Check if object is a target enemy (exclude player itself)
+            if (obj && obj !== player && !obj.deleted && targetEnemyNames.includes(obj.name)) {
                 const enemyCollider = getColliderRect(obj);
                 
                 // Only draw visuals if showHitbox is enabled
@@ -1842,30 +2065,16 @@
                 const barW = BAR_WIDTH;
                 const pivot = { x: obj.position.x + obj.width / 2, y: obj.position.y + obj.height / 2 };
                 const angleRad = (obj.rotation || 0) * Math.PI / 180;
+                const zoneOffsets = getEnemyAttackZoneOffsets(obj.name);
 
-                const leftBarRect = { left: enemyCollider.left - barW, right: enemyCollider.left, top: enemyCollider.top, bottom: enemyCollider.bottom };
-                const rightBarRect = { left: enemyCollider.right, right: enemyCollider.right + barW, top: enemyCollider.top, bottom: enemyCollider.bottom };
+                // Enemy attack zones with custom offsets applied
+                let leftBarRect = { left: enemyCollider.left - barW, right: enemyCollider.left, top: enemyCollider.top, bottom: enemyCollider.bottom };
+                let rightBarRect = { left: enemyCollider.right, right: enemyCollider.right + barW, top: enemyCollider.top, bottom: enemyCollider.bottom };
+                leftBarRect = applyAttackZoneOffsets(leftBarRect, zoneOffsets);
+                rightBarRect = applyAttackZoneOffsets(rightBarRect, zoneOffsets);
 
                 const leftBarPoly = rotatePoly(rectToPoly(leftBarRect), pivot, angleRad);
                 const rightBarPoly = rotatePoly(rectToPoly(rightBarRect), pivot, angleRad);
-
-                function drawOverlayPoly(poly, strokeColor, fillColor, alpha = 1) {
-                    overlayCtx.save();
-                    overlayCtx.globalAlpha = alpha;
-                    overlayCtx.beginPath();
-                    const p0 = game.getRenderPosition(poly[0].x, poly[0].y);
-                    overlayCtx.moveTo(p0.x, p0.y);
-                    for (let i = 1; i < poly.length; i++) {
-                        const p = game.getRenderPosition(poly[i].x, poly[i].y);
-                        overlayCtx.lineTo(p.x, p.y);
-                    }
-                    overlayCtx.closePath();
-                    overlayCtx.lineWidth = 3;
-                    if (fillColor) { overlayCtx.fillStyle = fillColor; overlayCtx.fill(); }
-                    overlayCtx.strokeStyle = strokeColor;
-                    overlayCtx.stroke();
-                    overlayCtx.restore();
-                }
 
                 if (polygonsIntersect(playerStripePoly, leftBarPoly)) {
                     anyHit = true;
@@ -1927,11 +2136,14 @@
 
         overlayCtx.restore();
 
-        // FIX: Only attack if there are actually enemies in range
-        if (anyHit && hasEnemiesInRange() && Date.now() - lastAttackTime >= ATTACK_COOLDOWN) {
-            if (typeof skillStart === 'function') {
-                lastAttackTime = Date.now();
-                skillStart();
+        // Attack if enemy in range (anyHit already calculated above)
+        if (anyHit && Date.now() - lastAttackTime >= ATTACK_COOLDOWN) {
+            lastAttackTime = Date.now();
+            // Use skillStart for attack, fallback to skillUse
+            if (typeof window.skillStart === 'function') {
+                window.skillStart();
+            } else if (typeof window.skillUse === 'function') {
+                window.skillUse();
             }
         }
         requestAnimationFrame(overlayLoop);
@@ -2019,5 +2231,3 @@
     }, 500);
 
 })();
-
-
