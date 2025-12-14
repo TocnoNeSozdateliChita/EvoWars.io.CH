@@ -1,6 +1,6 @@
 // @name         EvoWorld Cheat Menu
 // @namespace    http://tampermonkey.net/
-// @version      0.3.1
+// @version      0.3.2
 // @description  Cheat menu for EvoWorld with Auto Attack, HitBox Colors, FPS Unlock, Anti-Lag
 // @author       You
 // @match        https://evoworld.io/
@@ -44,6 +44,9 @@
         autoAttack: {
             showHitbox: true,
             enableTurns: false,
+            autoFlick: true,
+            useSync: true,
+            predictMovement: true,
             targetEnemies: ['grimReaper', 'ghostlyReaper', 'pumpkinGhost'],
             enemyHitboxes: {
                 grimReaper: { left: 0, right: 0, top: 0, bottom: 0 },
@@ -57,6 +60,9 @@
             level: 1.0
         },
         nightVision: {
+            enabled: false
+        },
+        blockWarnings: {
             enabled: false
         },
         fakeProfile: {
@@ -789,6 +795,178 @@
         }
     };
 
+    // Block Warnings Module - Hide account_share_warning and bad_nickname_warning popups
+    // Uses multiple methods: MutationObserver + jQuery intercept + interval check
+    const BlockWarningsModule = {
+        enabled: false,
+        observer: null,
+        checkInterval: null,
+        initialized: false,
+        jQueryHooked: false,
+
+        init() {
+            if (this.initialized) return;
+            this.initialized = true;
+            
+            const self = this;
+            
+            // Method 1: MutationObserver for DOM changes
+            this.observer = new MutationObserver((mutations) => {
+                if (!self.enabled) return;
+                mutations.forEach((mutation) => {
+                    mutation.addedNodes.forEach((node) => {
+                        if (node.nodeType === 1) {
+                            self.checkNode(node);
+                        }
+                    });
+                });
+            });
+            
+            // Method 2: Hook jQuery append for .popups
+            this.hookJQuery();
+            
+            // Start observing
+            this.startObserving();
+        },
+        
+        hookJQuery() {
+            if (this.jQueryHooked) return;
+            const self = this;
+            
+            // Wait for jQuery
+            const tryHook = () => {
+                if (window.$ && window.$.fn && window.$.fn.append) {
+                    const originalAppend = window.$.fn.append;
+                    window.$.fn.append = function(...args) {
+                        const result = originalAppend.apply(this, args);
+                        // Check if appending to .popups
+                        if (self.enabled && this.hasClass && this.hasClass('popups')) {
+                            setTimeout(() => self.checkExistingPopups(), 10);
+                        }
+                        return result;
+                    };
+                    self.jQueryHooked = true;
+                    console.log('[CheatMenu] jQuery append hooked');
+                } else {
+                    setTimeout(tryHook, 500);
+                }
+            };
+            tryHook();
+        },
+        
+        checkNode(node) {
+            // Check if node is a popup or contains popups
+            if (node.classList && node.classList.contains('popup')) {
+                this.checkAndBlockPopup(node);
+            }
+            if (node.querySelectorAll) {
+                node.querySelectorAll('.popup').forEach(p => this.checkAndBlockPopup(p));
+            }
+        },
+        
+        checkAndBlockPopup(popup) {
+            if (!popup || !this.enabled) return;
+            
+            const html = popup.innerHTML || '';
+            const hasAccountShare = html.includes('account_share_warning');
+            const hasBadNickname = html.includes('bad_nickname_warning');
+            
+            // Also check data-translate attributes
+            const warningTitle = popup.querySelector('[data-translate="warning"]');
+            const accountShareEl = popup.querySelector('[data-translate="account_share_warning"]');
+            const badNicknameEl = popup.querySelector('[data-translate="bad_nickname_warning"]');
+            
+            if (hasAccountShare || hasBadNickname || accountShareEl || badNicknameEl) {
+                console.log('[CheatMenu] Blocking warning popup:', hasAccountShare ? 'account_share' : 'bad_nickname');
+                
+                // Get popup ID for API call
+                const popupId = popup.getAttribute('data-id');
+                
+                // Remove popup
+                popup.style.display = 'none';
+                popup.remove();
+                
+                // Close popup via API (so it doesn't show again)
+                if (popupId && window.$ && window.siteUrl) {
+                    window.$.ajax({
+                        type: 'POST',
+                        data: { id: popupId },
+                        xhrFields: { withCredentials: true },
+                        url: window.siteUrl + 'api/closePopup.php'
+                    });
+                }
+                
+                // Hide overlay if no popups remain
+                this.hideOverlayIfEmpty();
+            }
+        },
+        
+        hideOverlayIfEmpty() {
+            setTimeout(() => {
+                const remainingPopups = document.querySelectorAll('.popups .popup');
+                if (remainingPopups.length === 0) {
+                    const overlay = document.querySelector('.popups > .overlay');
+                    if (overlay) {
+                        overlay.style.display = 'none';
+                    }
+                    if (typeof window.overlayLock !== 'undefined') {
+                        window.overlayLock = false;
+                    }
+                }
+            }, 50);
+        },
+        
+        startObserving() {
+            const popupsContainer = document.querySelector('.popups');
+            if (popupsContainer) {
+                this.observer.observe(popupsContainer, { childList: true, subtree: true });
+                console.log('[CheatMenu] BlockWarnings observer started');
+            } else {
+                setTimeout(() => this.startObserving(), 500);
+            }
+        },
+
+        enable() {
+            this.enabled = true;
+            SettingsManager.set('blockWarnings.enabled', true);
+            if (!this.initialized) this.init();
+            
+            // Check existing popups immediately
+            this.checkExistingPopups();
+            
+            // Method 3: Interval check as fallback
+            if (this.checkInterval) clearInterval(this.checkInterval);
+            this.checkInterval = setInterval(() => {
+                if (this.enabled) this.checkExistingPopups();
+            }, 500);
+        },
+        
+        checkExistingPopups() {
+            const popups = document.querySelectorAll('.popups .popup');
+            popups.forEach(popup => this.checkAndBlockPopup(popup));
+        },
+
+        disable() {
+            this.enabled = false;
+            SettingsManager.set('blockWarnings.enabled', false);
+            if (this.checkInterval) {
+                clearInterval(this.checkInterval);
+                this.checkInterval = null;
+            }
+        },
+
+        toggle() {
+            this.enabled ? this.disable() : this.enable();
+            return this.enabled;
+        },
+
+        applySettings(settings) {
+            if (settings && settings.enabled) {
+                this.enable();
+            }
+        }
+    };
+
     // ==================== MENU STYLES ====================
 
     const MENU_STYLES = `
@@ -1001,12 +1179,20 @@
                             <div class="cheat-menu-submenu" id="autoattack-submenu">
                                 <div class="cheat-menu-submenu-title">Auto Attack Settings</div>
                                 <div class="cheat-menu-row">
-                                    <span class="cheat-menu-label">Enable Attack Turns</span>
-                                    <div class="cheat-menu-toggle" data-setting="autoAttack.enableTurns"></div>
-                                </div>
-                                <div class="cheat-menu-row">
                                     <span class="cheat-menu-label">Show Hitbox Visuals</span>
                                     <div class="cheat-menu-toggle" data-setting="autoAttack.showHitbox"></div>
+                                </div>
+                                <div class="cheat-menu-row">
+                                    <span class="cheat-menu-label">Auto Flick</span>
+                                    <div class="cheat-menu-toggle" data-setting="autoAttack.autoFlick"></div>
+                                </div>
+                                <div class="cheat-menu-row">
+                                    <span class="cheat-menu-label">Use SYNC (Fast)</span>
+                                    <div class="cheat-menu-toggle" data-setting="autoAttack.useSync"></div>
+                                </div>
+                                <div class="cheat-menu-row">
+                                    <span class="cheat-menu-label">Predict Movement</span>
+                                    <div class="cheat-menu-toggle" data-setting="autoAttack.predictMovement"></div>
                                 </div>
                                 <div class="cheat-menu-submenu-title" style="margin-top:12px;">Target Enemies</div>
                                 <div id="enemy-targets-list"></div>
@@ -1108,6 +1294,14 @@
                                 <div class="cheat-menu-toggle" data-setting="nightVision.enabled"></div>
                             </div>
                             <p style="color: rgba(255,255,255,0.4); font-size: 11px; margin-top: 4px;">See through darkness in caves</p>
+                        </div>
+                        <div class="cheat-menu-section">
+                            <div class="cheat-menu-section-title">Block Warnings</div>
+                            <div class="cheat-menu-row">
+                                <span class="cheat-menu-label">Block Warning Popups</span>
+                                <div class="cheat-menu-toggle" data-setting="blockWarnings.enabled"></div>
+                            </div>
+                            <p style="color: rgba(255,255,255,0.4); font-size: 11px; margin-top: 4px;">Hides account share & bad nickname warnings</p>
                         </div>
                     </div>
                     <div class="cheat-menu-panel" data-panel="settings">
@@ -1554,12 +1748,21 @@
                 autoAttackShowHitbox = value;
             } else if (setting === 'autoAttack.enableTurns') {
                 autoAttackEnableTurns = value;
+            } else if (setting === 'autoAttack.autoFlick') {
+                autoAttackAutoFlick = value;
+            } else if (setting === 'autoAttack.useSync') {
+                autoAttackUseSync = value;
+                if (value) installSyncHook();
+            } else if (setting === 'autoAttack.predictMovement') {
+                autoAttackPredictMovement = value;
             } else if (setting === 'zoom.enabled') {
                 value ? ZoomModule.enable() : ZoomModule.disable();
             } else if (setting === 'zoom.level') {
                 ZoomModule.setLevel(parseFloat(value));
             } else if (setting === 'nightVision.enabled') {
                 value ? NightVisionModule.enable() : NightVisionModule.disable();
+            } else if (setting === 'blockWarnings.enabled') {
+                value ? BlockWarningsModule.enable() : BlockWarningsModule.disable();
             }
         },
 
@@ -1605,6 +1808,7 @@
             ESPModule.applySettings(settings.esp);
             ZoomModule.applySettings(settings.zoom);
             NightVisionModule.applySettings(settings.nightVision);
+            BlockWarningsModule.applySettings(settings.blockWarnings);
         },
 
         switchTab(tabName) {
@@ -1812,11 +2016,24 @@
     let autoAttackEnabled = false;
     let autoAttackShowHitbox = true;  // Show hitbox visuals
     let autoAttackEnableTurns = false; // Enable attack turns (auto-rotate to enemy)
+    let autoAttackAutoFlick = true;   // Auto flick to face enemy before attack
+    let autoAttackUseSync = true;     // Use server SYNC events for faster reaction
+    let autoAttackPredictMovement = true; // Predict movement based on ping/FPS
     let lastAttackTime = 0;
     const ATTACK_COOLDOWN = 100; // Minimum time between attack attempts (server has 500ms cooldown)
     let game = null;
     let originalDrawObjectsProto = null;
     let overlayCanvas, overlayCtx;
+    let syncHookInstalled = false;
+    
+    // Performance optimization variables
+    let lastSyncLogicTime = 0;
+    const SYNC_LOGIC_THROTTLE = 50; // Min ms between SYNC logic calls
+    let cachedEnemies = [];
+    let lastEnemyCacheTime = 0;
+    const ENEMY_CACHE_TTL = 100; // Cache enemies for 100ms
+    let lastOverlayDrawTime = 0;
+    const OVERLAY_THROTTLE = 33; // ~30 FPS for overlay (instead of 60+)
 
     // Load auto-attack settings
     function loadAutoAttackSettings() {
@@ -1824,6 +2041,9 @@
         if (settings) {
             autoAttackShowHitbox = settings.showHitbox !== false;
             autoAttackEnableTurns = settings.enableTurns || false;
+            autoAttackAutoFlick = settings.autoFlick !== false;
+            autoAttackUseSync = settings.useSync !== false;
+            autoAttackPredictMovement = settings.predictMovement !== false;
             if (settings.targetEnemies && Array.isArray(settings.targetEnemies)) {
                 targetEnemyNames = settings.targetEnemies;
             }
@@ -1835,6 +2055,31 @@
                 }
             }
         }
+    }
+    
+    // Simulate arrow key press for flick
+    function simulateKeyPress(keyCode, key) {
+        const keyDown = new KeyboardEvent('keydown', {
+            key: key, code: key, keyCode: keyCode, which: keyCode, bubbles: true, cancelable: true
+        });
+        document.dispatchEvent(keyDown);
+        setTimeout(() => {
+            const keyUp = new KeyboardEvent('keyup', {
+                key: key, code: key, keyCode: keyCode, which: keyCode, bubbles: true, cancelable: true
+            });
+            document.dispatchEvent(keyUp);
+        }, 35);
+    }
+    
+    function flickLeft() { simulateKeyPress(37, 'ArrowLeft'); }
+    function flickRight() { simulateKeyPress(39, 'ArrowRight'); }
+    
+    // Get prediction offset based on ping and FPS
+    function getPredictionOffset() {
+        if (!autoAttackPredictMovement) return 0;
+        const frameTime = (typeof window.lastFps === 'number' && window.lastFps > 0) ? (1000 / window.lastFps) : 16;
+        const serverDelay = (typeof window.latency === 'number') ? window.latency : 0;
+        return (frameTime + serverDelay) / 1000 * 100; // rough pixel offset
     }
 
     function rectToPoly(rect) {
@@ -2003,6 +2248,8 @@
 
     function overlayLoop() {
         if (!game || !overlayCtx) { return requestAnimationFrame(overlayLoop); }
+        
+        // Sync overlay canvas with game canvas every frame (no throttle for visuals)
         const rect = game.canvas.getBoundingClientRect();
         overlayCanvas.style.left = rect.left + 'px';
         overlayCanvas.style.top = rect.top + 'px';
@@ -2024,19 +2271,29 @@
             drawESP();
         }
 
-        // If auto attack is disabled, still continue the loop for ESP and hitboxes
-        if (!autoAttackEnabled || !game.me) {
-            requestAnimationFrame(overlayLoop);
-            return;
+        // Draw auto-attack visuals if enabled
+        if (autoAttackEnabled && game.me && autoAttackShowHitbox) {
+            drawAutoAttackVisuals();
         }
 
+        // Attack logic (throttled for performance)
+        if (autoAttackEnabled && game.me && !autoAttackUseSync) {
+            checkAndAttack();
+        }
+        
+        requestAnimationFrame(overlayLoop);
+    }
+    
+    // Separated visual drawing for auto-attack (only when showHitbox enabled)
+    function drawAutoAttackVisuals() {
+        if (!game || !game.me || !autoAttackShowHitbox) return;
+        
         const player = game.me;
         const playerCollider = getColliderRect(player);
         const BAR_WIDTH = 45;
         const playerAngleRad = (player.moveDirection || 0) * Math.PI / 180;
         const side = (typeof player.direction === 'number' ? player.direction : (player.flySide || 1));
 
-        // Player attack zone - directly adjacent to player hitbox
         const playerStripeRect = side >= 0
             ? { left: playerCollider.right, right: playerCollider.right + BAR_WIDTH, top: playerCollider.top, bottom: playerCollider.bottom }
             : { left: playerCollider.left - BAR_WIDTH, right: playerCollider.left, top: playerCollider.top, bottom: playerCollider.bottom };
@@ -2046,107 +2303,275 @@
         let anyHit = false;
         overlayCtx.save();
 
-        for (const id in game.gameObjects) {
-            const obj = game.gameObjects[id];
-            // Check if object is a target enemy (exclude player itself)
-            if (obj && obj !== player && !obj.deleted && targetEnemyNames.includes(obj.name)) {
-                const enemyCollider = getColliderRect(obj);
-                
-                // Only draw visuals if showHitbox is enabled
-                if (autoAttackShowHitbox) {
-                    const rp = game.getRenderPosition(enemyCollider.left, enemyCollider.bottom);
-                    const w = (enemyCollider.right - enemyCollider.left) * game.scaleX * game.zoom;
-                    const h = (enemyCollider.top - enemyCollider.bottom) * game.scaleY * game.zoom;
-                    overlayCtx.lineWidth = 2;
-                    overlayCtx.strokeStyle = HitboxColorModule.enabled ? HitboxColorModule.enemyColor : '#07345a';
-                    overlayCtx.strokeRect(rp.x, rp.y - h, w, h);
-                }
+        // Use cached enemies for performance
+        const enemies = getCachedEnemies();
+        for (let i = 0; i < enemies.length; i++) {
+            const obj = enemies[i];
+            if (obj.deleted) continue;
+            
+            const enemyCollider = getColliderRect(obj);
+            
+            // Draw enemy hitbox
+            const rp = game.getRenderPosition(enemyCollider.left, enemyCollider.bottom);
+            const w = (enemyCollider.right - enemyCollider.left) * game.scaleX * game.zoom;
+            const h = (enemyCollider.top - enemyCollider.bottom) * game.scaleY * game.zoom;
+            overlayCtx.lineWidth = 2;
+            overlayCtx.strokeStyle = HitboxColorModule.enabled ? HitboxColorModule.enemyColor : '#07345a';
+            overlayCtx.strokeRect(rp.x, rp.y - h, w, h);
 
-                const barW = BAR_WIDTH;
-                const pivot = { x: obj.position.x + obj.width / 2, y: obj.position.y + obj.height / 2 };
-                const angleRad = (obj.rotation || 0) * Math.PI / 180;
-                const zoneOffsets = getEnemyAttackZoneOffsets(obj.name);
+            const barW = BAR_WIDTH;
+            const pivot = { x: obj.position.x + obj.width / 2, y: obj.position.y + obj.height / 2 };
+            const angleRad = (obj.rotation || 0) * Math.PI / 180;
+            const zoneOffsets = getEnemyAttackZoneOffsets(obj.name);
 
-                // Enemy attack zones with custom offsets applied
-                let leftBarRect = { left: enemyCollider.left - barW, right: enemyCollider.left, top: enemyCollider.top, bottom: enemyCollider.bottom };
-                let rightBarRect = { left: enemyCollider.right, right: enemyCollider.right + barW, top: enemyCollider.top, bottom: enemyCollider.bottom };
-                leftBarRect = applyAttackZoneOffsets(leftBarRect, zoneOffsets);
-                rightBarRect = applyAttackZoneOffsets(rightBarRect, zoneOffsets);
+            let leftBarRect = { left: enemyCollider.left - barW, right: enemyCollider.left, top: enemyCollider.top, bottom: enemyCollider.bottom };
+            let rightBarRect = { left: enemyCollider.right, right: enemyCollider.right + barW, top: enemyCollider.top, bottom: enemyCollider.bottom };
+            leftBarRect = applyAttackZoneOffsets(leftBarRect, zoneOffsets);
+            rightBarRect = applyAttackZoneOffsets(rightBarRect, zoneOffsets);
 
-                const leftBarPoly = rotatePoly(rectToPoly(leftBarRect), pivot, angleRad);
-                const rightBarPoly = rotatePoly(rectToPoly(rightBarRect), pivot, angleRad);
+            const leftBarPoly = rotatePoly(rectToPoly(leftBarRect), pivot, angleRad);
+            const rightBarPoly = rotatePoly(rectToPoly(rightBarRect), pivot, angleRad);
 
-                if (polygonsIntersect(playerStripePoly, leftBarPoly)) {
-                    anyHit = true;
-                    if (autoAttackShowHitbox) drawOverlayPoly(leftBarPoly, '#ff0000', 'rgba(255,0,0,0.22)');
-                } else {
-                    if (autoAttackShowHitbox) drawOverlayPoly(leftBarPoly, '#ff0000', null, 0.85);
-                }
-                if (polygonsIntersect(playerStripePoly, rightBarPoly)) {
-                    anyHit = true;
-                    if (autoAttackShowHitbox) drawOverlayPoly(rightBarPoly, '#ff0000', 'rgba(255,0,0,0.22)');
-                } else {
-                    if (autoAttackShowHitbox) drawOverlayPoly(rightBarPoly, '#ff0000', null, 0.85);
-                }
-            }
-        }
-
-        // Only draw visuals if showHitbox is enabled
-        if (autoAttackShowHitbox) {
-            overlayCtx.lineWidth = 3;
-            overlayCtx.strokeStyle = '#ff0000';
-            if (anyHit) {
-                overlayCtx.save();
-                overlayCtx.shadowColor = 'rgba(255,0,0,0.9)';
-                overlayCtx.shadowBlur = 20;
-                overlayCtx.fillStyle = 'rgba(255,0,0,0.35)';
-                overlayCtx.beginPath();
-                const p0 = game.getRenderPosition(playerStripePoly[0].x, playerStripePoly[0].y);
-                overlayCtx.moveTo(p0.x, p0.y);
-                for (let i = 1; i < playerStripePoly.length; i++) {
-                    const p = game.getRenderPosition(playerStripePoly[i].x, playerStripePoly[i].y);
-                    overlayCtx.lineTo(p.x, p.y);
-                }
-                overlayCtx.closePath();
-                overlayCtx.fill();
-                overlayCtx.lineWidth = 4;
-                overlayCtx.stroke();
-                overlayCtx.restore();
+            if (polygonsIntersect(playerStripePoly, leftBarPoly)) {
+                anyHit = true;
+                drawOverlayPoly(leftBarPoly, '#ff0000', 'rgba(255,0,0,0.22)');
             } else {
-                overlayCtx.beginPath();
-                const p0 = game.getRenderPosition(playerStripePoly[0].x, playerStripePoly[0].y);
-                overlayCtx.moveTo(p0.x, p0.y);
-                for (let i = 1; i < playerStripePoly.length; i++) {
-                    const p = game.getRenderPosition(playerStripePoly[i].x, playerStripePoly[i].y);
-                    overlayCtx.lineTo(p.x, p.y);
-                }
-                overlayCtx.closePath();
-                overlayCtx.globalAlpha = 0.6;
-                overlayCtx.stroke();
-                overlayCtx.globalAlpha = 1;
+                drawOverlayPoly(leftBarPoly, '#ff0000', null, 0.85);
             }
-
-            const playerRp = game.getRenderPosition(playerCollider.left, playerCollider.bottom);
-            const pw = (playerCollider.right - playerCollider.left) * game.scaleX * game.zoom;
-            const ph = (playerCollider.top - playerCollider.bottom) * game.scaleY * game.zoom;
-            overlayCtx.lineWidth = 3;
-            overlayCtx.strokeStyle = HitboxColorModule.enabled ? HitboxColorModule.playerColor : '#00ff00';
-            overlayCtx.strokeRect(playerRp.x, playerRp.y - ph, pw, ph);
+            if (polygonsIntersect(playerStripePoly, rightBarPoly)) {
+                anyHit = true;
+                drawOverlayPoly(rightBarPoly, '#ff0000', 'rgba(255,0,0,0.22)');
+            } else {
+                drawOverlayPoly(rightBarPoly, '#ff0000', null, 0.85);
+            }
         }
+
+        // Draw player attack zone
+        overlayCtx.lineWidth = 3;
+        overlayCtx.strokeStyle = '#ff0000';
+        if (anyHit) {
+            overlayCtx.save();
+            overlayCtx.shadowColor = 'rgba(255,0,0,0.9)';
+            overlayCtx.shadowBlur = 20;
+            overlayCtx.fillStyle = 'rgba(255,0,0,0.35)';
+            overlayCtx.beginPath();
+            const p0 = game.getRenderPosition(playerStripePoly[0].x, playerStripePoly[0].y);
+            overlayCtx.moveTo(p0.x, p0.y);
+            for (let i = 1; i < playerStripePoly.length; i++) {
+                const p = game.getRenderPosition(playerStripePoly[i].x, playerStripePoly[i].y);
+                overlayCtx.lineTo(p.x, p.y);
+            }
+            overlayCtx.closePath();
+            overlayCtx.fill();
+            overlayCtx.lineWidth = 4;
+            overlayCtx.stroke();
+            overlayCtx.restore();
+        } else {
+            overlayCtx.beginPath();
+            const p0 = game.getRenderPosition(playerStripePoly[0].x, playerStripePoly[0].y);
+            overlayCtx.moveTo(p0.x, p0.y);
+            for (let i = 1; i < playerStripePoly.length; i++) {
+                const p = game.getRenderPosition(playerStripePoly[i].x, playerStripePoly[i].y);
+                overlayCtx.lineTo(p.x, p.y);
+            }
+            overlayCtx.closePath();
+            overlayCtx.globalAlpha = 0.6;
+            overlayCtx.stroke();
+            overlayCtx.globalAlpha = 1;
+        }
+
+        // Draw player hitbox
+        const playerRp = game.getRenderPosition(playerCollider.left, playerCollider.bottom);
+        const pw = (playerCollider.right - playerCollider.left) * game.scaleX * game.zoom;
+        const ph = (playerCollider.top - playerCollider.bottom) * game.scaleY * game.zoom;
+        overlayCtx.lineWidth = 3;
+        overlayCtx.strokeStyle = HitboxColorModule.enabled ? HitboxColorModule.playerColor : '#00ff00';
+        overlayCtx.strokeRect(playerRp.x, playerRp.y - ph, pw, ph);
 
         overlayCtx.restore();
+    }
+    
+    // Optimized attack check (for non-SYNC mode)
+    function checkAndAttack() {
+        if (!game || !game.me) return;
+        
+        const now = Date.now();
+        if (now - lastAttackTime < ATTACK_COOLDOWN) return;
+        
+        const player = game.me;
+        const playerCollider = getColliderRect(player);
+        const BAR_WIDTH = 45;
+        const playerAngleRad = (player.moveDirection || 0) * Math.PI / 180;
+        const side = (typeof player.direction === 'number' ? player.direction : (player.flySide || 1));
 
-        // Attack if enemy in range (anyHit already calculated above)
-        if (anyHit && Date.now() - lastAttackTime >= ATTACK_COOLDOWN) {
-            lastAttackTime = Date.now();
-            // Use skillStart for attack, fallback to skillUse
-            if (typeof window.skillStart === 'function') {
-                window.skillStart();
-            } else if (typeof window.skillUse === 'function') {
-                window.skillUse();
+        const playerStripeRect = side >= 0
+            ? { left: playerCollider.right, right: playerCollider.right + BAR_WIDTH, top: playerCollider.top, bottom: playerCollider.bottom }
+            : { left: playerCollider.left - BAR_WIDTH, right: playerCollider.left, top: playerCollider.top, bottom: playerCollider.bottom };
+        const playerPivot = { x: player.position.x + player.width / 2, y: player.position.y + player.height / 2 };
+        const playerStripePoly = rotatePoly(rectToPoly(playerStripeRect), playerPivot, playerAngleRad);
+
+        const enemies = getCachedEnemies();
+        for (let i = 0; i < enemies.length; i++) {
+            const obj = enemies[i];
+            if (obj.deleted) continue;
+            
+            const enemyCollider = getColliderRect(obj);
+            const barW = BAR_WIDTH;
+            const pivot = { x: obj.position.x + obj.width / 2, y: obj.position.y + obj.height / 2 };
+            const angleRad = (obj.rotation || 0) * Math.PI / 180;
+            const zoneOffsets = getEnemyAttackZoneOffsets(obj.name);
+
+            let leftBarRect = { left: enemyCollider.left - barW, right: enemyCollider.left, top: enemyCollider.top, bottom: enemyCollider.bottom };
+            let rightBarRect = { left: enemyCollider.right, right: enemyCollider.right + barW, top: enemyCollider.top, bottom: enemyCollider.bottom };
+            leftBarRect = applyAttackZoneOffsets(leftBarRect, zoneOffsets);
+            rightBarRect = applyAttackZoneOffsets(rightBarRect, zoneOffsets);
+
+            const leftBarPoly = rotatePoly(rectToPoly(leftBarRect), pivot, angleRad);
+            const rightBarPoly = rotatePoly(rectToPoly(rightBarRect), pivot, angleRad);
+
+            if (polygonsIntersect(playerStripePoly, leftBarPoly) || polygonsIntersect(playerStripePoly, rightBarPoly)) {
+                lastAttackTime = now;
+                if (typeof window.skillStart === 'function') {
+                    window.skillStart();
+                } else if (typeof window.skillUse === 'function') {
+                    window.skillUse();
+                }
+                return; // Attack once per frame
             }
         }
-        requestAnimationFrame(overlayLoop);
+    }
+    
+    // Get cached list of target enemies (optimized)
+    function getCachedEnemies() {
+        const now = Date.now();
+        if (now - lastEnemyCacheTime < ENEMY_CACHE_TTL && cachedEnemies.length > 0) {
+            // Filter out deleted enemies from cache
+            cachedEnemies = cachedEnemies.filter(e => e && !e.deleted);
+            if (cachedEnemies.length > 0) return cachedEnemies;
+        }
+        
+        // Rebuild cache
+        cachedEnemies = [];
+        if (!game || !game.me) return cachedEnemies;
+        
+        const player = game.me;
+        for (const id in game.gameObjects) {
+            const obj = game.gameObjects[id];
+            if (obj && obj !== player && !obj.deleted && targetEnemyNames.includes(obj.name)) {
+                cachedEnemies.push(obj);
+            }
+        }
+        lastEnemyCacheTime = now;
+        return cachedEnemies;
+    }
+    
+    // Find closest enemy from target list (optimized)
+    function getClosestEnemy() {
+        if (!game || !game.me) return null;
+        const player = game.me;
+        const enemies = getCachedEnemies();
+        
+        let closest = null;
+        let closestDist = Infinity;
+        
+        for (let i = 0; i < enemies.length; i++) {
+            const obj = enemies[i];
+            if (obj.deleted) continue;
+            const dx = Math.abs(player.position.x - obj.position.x);
+            const dy = Math.abs(player.position.y - obj.position.y);
+            const dist = dx + dy;
+            if (dist < closestDist) {
+                closestDist = dist;
+                closest = obj;
+            }
+        }
+        return closest;
+    }
+    
+    // Main auto-attack logic (called on SYNC or frame) - OPTIMIZED with throttle
+    function performAutoAttackLogic() {
+        if (!autoAttackEnabled || !game || !game.me) return;
+        
+        // Throttle SYNC logic to prevent lag
+        const now = Date.now();
+        if (now - lastSyncLogicTime < SYNC_LOGIC_THROTTLE) return;
+        lastSyncLogicTime = now;
+        
+        const player = game.me;
+        const enemy = getClosestEnemy();
+        if (!enemy) return;
+        
+        // Check if we're a reaper (can attack)
+        const reaperNames = ['grimReaper', 'ghostlyReaper', 'pumpkinGhost'];
+        if (!reaperNames.includes(player.name)) return;
+        
+        const onLeftSide = player.position.x <= enemy.position.x;
+        const facingEnemy = (onLeftSide && player.direction === 1) || (!onLeftSide && player.direction === -1);
+        const enemyFlicking = (onLeftSide && enemy.direction === 1) || (!onLeftSide && enemy.direction === -1);
+        
+        // Calculate distance with prediction
+        const predOffset = getPredictionOffset();
+        const dx = Math.abs(player.position.x - enemy.position.x) - predOffset;
+        const dy = Math.abs(player.position.y - enemy.position.y);
+        
+        // Attack range (roughly 140 pixels for scythe)
+        const attackRangeX = enemyFlicking ? 141 : 140;
+        const attackRangeY = 150;
+        
+        // Apply enemy attack zone offsets
+        const zoneOffsets = getEnemyAttackZoneOffsets(enemy.name);
+        const effectiveRangeX = attackRangeX + zoneOffsets.left + zoneOffsets.right;
+        const effectiveRangeY = attackRangeY + zoneOffsets.top + zoneOffsets.bottom;
+        
+        if (dx <= effectiveRangeX && dy <= effectiveRangeY) {
+            // In range - check if we need to flick
+            if (!facingEnemy && autoAttackAutoFlick) {
+                // Flick to face enemy
+                if (onLeftSide) {
+                    flickRight();
+                } else {
+                    flickLeft();
+                }
+            }
+            
+            // Attack with cooldown
+            if (now - lastAttackTime >= ATTACK_COOLDOWN) {
+                lastAttackTime = now;
+                if (typeof window.skillStart === 'function') {
+                    window.skillStart();
+                } else if (typeof window.skillUse === 'function') {
+                    window.skillUse();
+                }
+                // Stop skill after short delay
+                setTimeout(() => {
+                    if (typeof window.skillStop === 'function') {
+                        window.skillStop();
+                    }
+                }, 100);
+            }
+        }
+    }
+    
+    // Install SYNC hook for faster reaction
+    function installSyncHook() {
+        if (syncHookInstalled) return;
+        if (typeof window.gameServer === 'undefined' || typeof window.gameServer.on !== 'function') {
+            // Retry later
+            setTimeout(installSyncHook, 1000);
+            return;
+        }
+        
+        try {
+            window.gameServer.on(window.socketMsgType.SYNC, function() {
+                if (autoAttackUseSync && autoAttackEnabled) {
+                    performAutoAttackLogic();
+                }
+            });
+            syncHookInstalled = true;
+            console.log('[CheatMenu] SYNC hook installed for fast auto-attack');
+        } catch (e) {
+            console.warn('[CheatMenu] Failed to install SYNC hook:', e);
+        }
     }
 
     // ESP Drawing function - draws lines from player to OTHER PLAYERS ONLY
@@ -2224,6 +2649,14 @@
 
             // Initialize Night Vision Module (intercept drawImage)
             NightVisionModule.init();
+            
+            // Initialize Block Warnings Module (intercept newPopup)
+            BlockWarningsModule.init();
+            
+            // Install SYNC hook for fast auto-attack
+            if (autoAttackUseSync) {
+                installSyncHook();
+            }
 
             // Initialize menu after game is ready
             MenuManager.init();
